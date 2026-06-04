@@ -22,6 +22,12 @@ Angular app with [PrimeNG](https://primeng.org/) and [Tailwind CSS](https://tail
 
 Auth routes: `/login`, `/signup`. The home route (`/`) requires a signed-in session.
 
+## Database (accounts)
+
+Run `supabase/migrations/001_accounts.sql` in the Supabase **SQL Editor** (safe to re-run). It creates the `accounts` table, `balance` column, RLS policies, and default-account trigger. Each row is scoped to `auth.uid()`.
+
+Accounts UI: `/accounts` (list, add, edit, delete).
+
 ## Commands
 
 ```bash

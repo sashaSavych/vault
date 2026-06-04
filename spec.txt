@@ -1,0 +1,102 @@
+Used stack: Angular 21, TypeScript 5.9, Angular CLI, RxJS, PrimeNG 21, PrimeUIX themes, PrimeIcons, Tailwind CSS 4 (with tailwindcss-primeui), PostCSS, SCSS.
+
+Product: Vault — personal finance tracker for incomes, expenses (outcomes), and transfers across multiple accounts. Responsive UI for desktop and mobile (PrimeNG + Tailwind, mobile-first layout, bottom nav or drawer on small screens).
+
+Storage: Supabase (recommended)
+- PostgreSQL for relational data (accounts, categories, transactions, transfers).
+- Row Level Security so each user sees only their data.
+- Supabase Auth (email/password or OAuth) for multi-device sync.
+- Optional: Supabase Realtime for live balance updates across tabs/devices.
+- Angular client: @supabase/supabase-js; env vars for URL + publishable key (never service role in the browser).
+
+Alternatives (when not to use Supabase):
+- Local-only / offline-first: IndexedDB via Dexie — no sync, no auth, simplest MVP.
+- Firebase Firestore — works, but transfers + multi-currency balances are easier to model in SQL.
+- Self-hosted API + Postgres — more ops; use if you need full control.
+
+---
+
+Data model (PostgreSQL / Supabase)
+
+accounts
+  id uuid PK
+  user_id uuid FK → auth.users
+  name text NOT NULL
+  currency char(3) NOT NULL  -- ISO 4217, e.g. UAH, USD, EUR
+  icon text                  -- icon id or emoji
+  balance numeric(19,4) NOT NULL DEFAULT 0
+  is_default boolean DEFAULT false
+  created_at timestamptz
+
+categories
+  id uuid PK
+  user_id uuid
+  name text NOT NULL
+  type text CHECK (type IN ('income', 'outcome'))
+  sort_order int
+
+incomes
+  id uuid PK
+  user_id uuid
+  account_id uuid FK → accounts  -- which account receives the money
+  name text NOT NULL
+  amount numeric(19,4) NOT NULL
+  date date NOT NULL DEFAULT CURRENT_DATE
+  category_id uuid FK → categories (type = income)
+  created_at timestamptz
+
+outcomes
+  id uuid PK
+  user_id uuid
+  account_id uuid FK → accounts  -- which account pays
+  name text NOT NULL
+  amount numeric(19,4) NOT NULL
+  date date NOT NULL DEFAULT CURRENT_DATE
+  category_id uuid FK → categories (type = outcome)
+  created_at timestamptz
+
+transfers
+  id uuid PK
+  user_id uuid
+  name text NOT NULL
+  from_account_id uuid FK → accounts
+  to_account_id uuid FK → accounts
+  amount_from numeric(19,4) NOT NULL   -- debited from source
+  amount_to numeric(19,4) NOT NULL     -- credited to destination (after rate)
+  exchange_rate numeric(19,8)          -- amount_to / amount_from when currencies differ
+  date date NOT NULL DEFAULT CURRENT_DATE
+  created_at timestamptz
+
+Note: Enforce one is_default per user (partial unique index or trigger). Transfers between same currency: rate = 1, amount_from = amount_to.
+
+---
+
+Features (MVP)
+
+1. Accounts
+   - CRUD: name, currency (dropdown), icon picker, balance, isDefault (only one default).
+   - List shows stored balance (later: adjust via incomes/outcomes/transfers).
+
+2. Incomes
+   - Fields: name, amount, date (PrimeNG DatePicker, default today), category (dropdown, income categories), account (which account receives).
+   - List/filter by date range and account.
+
+3. Outcomes
+   - Fields: name, amount, date (default today), category (outcome categories), account (which account pays).
+   - Same list/filter patterns as incomes.
+
+4. Transfers
+   - Fields: name, from account, to account, amount from, amount to OR exchange rate (auto-calc the other when currencies differ).
+   - Validation: from ≠ to; rate required when currencies differ.
+
+5. UI / mobile
+   - Responsive grid and forms; touch-friendly controls (min tap targets).
+   - PrimeNG Select, DatePicker, InputNumber, Dialog/Drawer for forms on mobile.
+   - Optional: PWA for add-to-home-screen.
+
+---
+
+Implementation order
+1. Supabase project + tables + RLS policies + seed categories.
+2. Auth (login/signup) + Angular Supabase service.
+3. Accounts module → categories → incomes/outcomes → transfers → dashboard balances.

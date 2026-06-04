@@ -1,6 +1,7 @@
 import { ApplicationConfig, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { ConfirmationService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeuix/themes/aura';
 
@@ -24,5 +25,6 @@ export const appConfig: ApplicationConfig = {
       },
     }),
     provideAppInitializer(() => inject(AuthService).initialize()),
+    ConfirmationService,
   ],
 };

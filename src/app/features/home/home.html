@@ -9,10 +9,19 @@
     <p-button label="Sign out" icon="pi pi-sign-out" severity="secondary" (onClick)="auth.signOut()" />
   </header>
 
-  <section class="mx-auto mt-12 w-full max-w-3xl rounded-2xl border border-surface-200 bg-surface-0 p-6 dark:border-surface-800 dark:bg-surface-900">
-    <h2 class="text-lg font-medium">Dashboard</h2>
-    <p class="mt-2 text-muted-color">
-      You are signed in. Accounts, incomes, and outcomes will appear here next.
-    </p>
+  <section class="mx-auto mt-12 w-full max-w-3xl">
+    <a
+      routerLink="/accounts"
+      class="flex items-center gap-4 rounded-2xl border border-surface-200 bg-surface-0 p-6 no-underline transition-colors hover:border-primary/30 dark:border-surface-800 dark:bg-surface-900"
+    >
+      <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <i class="pi pi-wallet text-xl"></i>
+      </div>
+      <div class="flex-1">
+        <h2 class="font-medium text-color">Accounts</h2>
+        <p class="text-sm text-muted-color">Add, edit, and remove your wallets</p>
+      </div>
+      <i class="pi pi-chevron-right text-muted-color"></i>
+    </a>
   </section>
 </main>
