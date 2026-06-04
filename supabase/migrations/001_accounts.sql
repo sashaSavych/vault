@@ -6,6 +6,7 @@ create table if not exists public.accounts (
   name text not null check (char_length(trim(name)) > 0),
   currency char(3) not null check (currency ~ '^[A-Z]{3}$'),
   icon text not null default 'pi-wallet',
+  card_id char(4) not null default '0000' check (card_id ~ '^\d{4}$'),
   balance numeric(19, 4) not null default 0,
   is_default boolean not null default false,
   created_at timestamptz not null default now()

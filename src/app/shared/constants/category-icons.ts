@@ -1,0 +1,17 @@
+export const CATEGORY_ICONS = [
+  { value: 'pi-tag', label: 'Tag' },
+  { value: 'pi-tags', label: 'Tags' },
+  { value: 'pi-shopping-cart', label: 'Shopping' },
+  { value: 'pi-play', label: 'Entertainment' },
+  { value: 'pi-home', label: 'Home' },
+  { value: 'pi-heart', label: 'Health' },
+  { value: 'pi-sparkles', label: 'Beauty' },
+  { value: 'pi-shopping-bag', label: 'Clothes' },
+  { value: 'pi-globe', label: 'Travel' },
+  { value: 'pi-car', label: 'Transport' },
+  { value: 'pi-gift', label: 'Gift' },
+  { value: 'pi-wallet', label: 'Wallet' },
+  { value: 'pi-money-bill', label: 'Money' },
+  { value: 'pi-eye-slash', label: 'Hidden' },
+  { value: 'pi-ban', label: 'Excluded' },
+] as const;

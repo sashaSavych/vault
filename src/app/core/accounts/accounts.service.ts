@@ -27,14 +27,7 @@ export class AccountsService {
   async create(input: AccountInput): Promise<Account> {
     const { data, error } = await this.supabase
       .from('accounts')
-      .insert({
-        user_id: this.requireUserId(),
-        name: input.name.trim(),
-        currency: input.currency,
-        icon: input.icon,
-        balance: input.balance,
-        is_default: input.isDefault,
-      })
+      .insert({ ...this.toPayload(input), user_id: this.requireUserId() })
       .select('*')
       .single();
 
@@ -48,13 +41,7 @@ export class AccountsService {
   async update(id: string, input: AccountInput): Promise<Account> {
     const { data, error } = await this.supabase
       .from('accounts')
-      .update({
-        name: input.name.trim(),
-        currency: input.currency,
-        icon: input.icon,
-        balance: input.balance,
-        is_default: input.isDefault,
-      })
+      .update(this.toPayload(input))
       .eq('id', id)
       .select('*')
       .single();
@@ -72,6 +59,17 @@ export class AccountsService {
     if (error) {
       throw error;
     }
+  }
+
+  private toPayload(input: AccountInput) {
+    return {
+      name: input.name.trim(),
+      currency: input.currency,
+      icon: input.icon,
+      card_id: input.cardId,
+      balance: input.balance,
+      is_default: input.isDefault,
+    };
   }
 
   private requireUserId(): string {

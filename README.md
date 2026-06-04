@@ -26,11 +26,15 @@ Auth routes: `/login`, `/signup`. The home route (`/`) requires a signed-in sess
 
 Run `supabase/migrations/001_accounts.sql` in the Supabase **SQL Editor** (safe to re-run). It creates the `accounts` table, `balance` column, RLS policies, and default-account trigger. Each row is scoped to `auth.uid()`.
 
-Accounts UI: `/accounts` (list, add, edit, delete).
+Accounts UI: `/accounts` (list, add, edit, delete). Run `008_accounts_id_required.sql` for the 4-digit account ID (`card_id`, default `0000`).
 
 Run `supabase/migrations/004_transfers.sql` for transfers (updates balances via triggers).
 
 Transfers UI: `/transfers` (list, create, delete; cross-currency rate support).
+
+Run `supabase/migrations/005_categories.sql` for categories (table, RLS, `seed_default_categories()`). If 005 was applied earlier, also run `006_seed_default_categories.sql`.
+
+Categories UI: `/categories` — all categories live in Supabase; defaults are seeded via `seed_default_categories()` when a type is empty.
 
 ## GitHub Pages delivery
 

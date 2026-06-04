@@ -19,6 +19,8 @@ import { ACCOUNT_ICONS } from '../../shared/constants/account-icons';
 import { CURRENCIES } from '../../shared/constants/currencies';
 import { formatBalance } from '../../shared/utils/format-balance';
 
+const DEFAULT_CARD_ID = '0000';
+
 @Component({
   selector: 'app-accounts',
   imports: [
@@ -50,6 +52,7 @@ export class Accounts implements OnInit {
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly dialogErrorMessage = signal<string | null>(null);
   protected readonly dialogVisible = signal(false);
   protected readonly editingId = signal<string | null>(null);
 
@@ -59,6 +62,10 @@ export class Accounts implements OnInit {
 
   protected readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(80)]],
+    cardId: [
+      DEFAULT_CARD_ID,
+      [Validators.required, Validators.pattern(/^\d{4}$/)],
+    ],
     currency: ['UAH', Validators.required],
     icon: ['pi-wallet', Validators.required],
     balance: [0, Validators.required],
@@ -74,8 +81,10 @@ export class Accounts implements OnInit {
   protected openCreate(): void {
     this.editingId.set(null);
     this.errorMessage.set(null);
+    this.dialogErrorMessage.set(null);
     this.form.reset({
       name: '',
+      cardId: DEFAULT_CARD_ID,
       currency: 'UAH',
       icon: 'pi-wallet',
       balance: 0,
@@ -87,8 +96,10 @@ export class Accounts implements OnInit {
   protected openEdit(account: Account): void {
     this.editingId.set(account.id);
     this.errorMessage.set(null);
+    this.dialogErrorMessage.set(null);
     this.form.reset({
       name: account.name,
+      cardId: account.cardId,
       currency: account.currency,
       icon: account.icon,
       balance: account.balance,
@@ -100,6 +111,7 @@ export class Accounts implements OnInit {
   protected closeDialog(): void {
     this.dialogVisible.set(false);
     this.editingId.set(null);
+    this.dialogErrorMessage.set(null);
   }
 
   protected async save(): Promise<void> {
@@ -108,11 +120,20 @@ export class Accounts implements OnInit {
       return;
     }
 
+    const raw = this.form.getRawValue();
     this.saving.set(true);
-    this.errorMessage.set(null);
+    this.dialogErrorMessage.set(null);
 
     try {
-      const input = this.form.getRawValue();
+      const input = {
+        name: raw.name,
+        currency: raw.currency,
+        icon: raw.icon,
+        cardId: raw.cardId,
+        balance: raw.balance,
+        isDefault: raw.isDefault,
+      };
+
       const id = this.editingId();
 
       if (id) {
@@ -124,7 +145,7 @@ export class Accounts implements OnInit {
       this.closeDialog();
       await this.reload();
     } catch (error) {
-      this.errorMessage.set(toErrorMessage(error));
+      this.dialogErrorMessage.set(toErrorMessage(error));
     } finally {
       this.saving.set(false);
     }
@@ -142,7 +163,7 @@ export class Accounts implements OnInit {
     });
   }
 
-  protected showError(controlName: 'name'): boolean {
+  protected showError(controlName: 'name' | 'cardId'): boolean {
     const control = this.form.controls[controlName];
     return control.invalid && control.touched;
   }

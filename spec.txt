@@ -23,7 +23,8 @@ accounts
   user_id uuid FK → auth.users
   name text NOT NULL
   currency char(3) NOT NULL  -- ISO 4217, e.g. UAH, USD, EUR
-  icon text                  -- icon id or emoji
+  icon text                  -- PrimeIcons class
+  card_id char(4) NOT NULL DEFAULT '0000'  -- 4-digit account ID
   balance numeric(19,4) NOT NULL DEFAULT 0
   is_default boolean DEFAULT false
   created_at timestamptz
@@ -33,6 +34,8 @@ categories
   user_id uuid
   name text NOT NULL
   type text CHECK (type IN ('income', 'outcome'))
+  parent_id uuid FK → categories (nullable, top-level only as parent)
+  icon text
   sort_order int
 
 incomes
@@ -99,4 +102,4 @@ Features (MVP)
 Implementation order
 1. Supabase project + tables + RLS policies + seed categories.
 2. Auth (login/signup) + Angular Supabase service.
-3. Accounts module → categories → incomes/outcomes → transfers → dashboard balances.
+3. Accounts module → categories (DB + seed_default_categories RPC) → incomes/outcomes → transfers → dashboard balances.
