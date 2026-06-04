@@ -28,11 +28,22 @@ Run `supabase/migrations/001_accounts.sql` in the Supabase **SQL Editor** (safe 
 
 Accounts UI: `/accounts` (list, add, edit, delete).
 
+## GitHub Pages delivery
+
+Deploys from the **github-pages** environment via [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml).
+
+1. **Settings → Environments → github-pages** — set `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (as environment variables or secrets).
+2. **Settings → Pages → Source** — **GitHub Actions**.
+3. Push to `main` (or run the workflow manually).
+
+Live site: [https://sashasavych.github.io/vault/](https://sashasavych.github.io/vault/)
+
 ## Commands
 
 ```bash
 npm start    # ng serve
 npm run build
+npm run build:pages   # same build as GitHub Pages (/vault/ base href)
 ```
 
 ## Note
