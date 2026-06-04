@@ -28,6 +28,10 @@ Run `supabase/migrations/001_accounts.sql` in the Supabase **SQL Editor** (safe 
 
 Accounts UI: `/accounts` (list, add, edit, delete).
 
+Run `supabase/migrations/004_transfers.sql` for transfers (updates balances via triggers).
+
+Transfers UI: `/transfers` (list, create, delete; cross-currency rate support).
+
 ## GitHub Pages delivery
 
 Deploys from the **github-pages** environment via [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml).

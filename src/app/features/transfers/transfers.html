@@ -1,0 +1,240 @@
+<main class="flex min-h-screen flex-col p-4 sm:p-8">
+  <header class="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <a
+        routerLink="/"
+        class="flex h-10 w-10 items-center justify-center rounded-full text-muted-color no-underline hover:bg-surface-100 dark:hover:bg-surface-800"
+        aria-label="Back to dashboard"
+      >
+        <i class="pi pi-arrow-left"></i>
+      </a>
+      <div>
+        <h1 class="text-2xl font-semibold text-primary">Transfers</h1>
+        <p class="text-sm text-muted-color">Move money between accounts</p>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <p-button
+        label="Create"
+        icon="pi pi-plus"
+        (onClick)="openCreate()"
+        [disabled]="accounts().length < 2"
+      />
+      <p-button
+        label="Sign out"
+        icon="pi pi-sign-out"
+        severity="secondary"
+        (onClick)="auth.signOut()"
+      />
+    </div>
+  </header>
+
+  <section class="mx-auto mt-8 w-full max-w-3xl">
+    @if (errorMessage(); as message) {
+      <p-message severity="error" [text]="message" styleClass="mb-4 w-full" />
+    }
+
+    @if (loading()) {
+      <div
+        class="rounded-2xl border border-surface-200 bg-surface-0 p-8 text-center dark:border-surface-800 dark:bg-surface-900"
+      >
+        <i class="pi pi-spin pi-spinner text-2xl text-muted-color"></i>
+        <p class="mt-3 text-muted-color">Loading transfers…</p>
+      </div>
+    } @else if (accounts().length < 2) {
+      <div
+        class="flex flex-col items-center rounded-2xl border border-dashed border-surface-300 bg-surface-0 p-10 text-center dark:border-surface-700 dark:bg-surface-900"
+      >
+        <i class="pi pi-arrow-right-arrow-left text-4xl text-primary"></i>
+        <h2 class="mt-4 text-lg font-medium">Need at least two accounts</h2>
+        <p class="mt-2 max-w-sm text-muted-color">
+          Create two or more accounts to transfer funds between them.
+        </p>
+        <a routerLink="/accounts" class="mt-6 no-underline">
+          <p-button label="Go to accounts" icon="pi pi-wallet" />
+        </a>
+      </div>
+    } @else if (transfers().length === 0) {
+      <div
+        class="flex flex-col items-center rounded-2xl border border-dashed border-surface-300 bg-surface-0 p-10 text-center dark:border-surface-700 dark:bg-surface-900"
+      >
+        <i class="pi pi-arrow-right-arrow-left text-4xl text-primary"></i>
+        <h2 class="mt-4 text-lg font-medium">No transfers yet</h2>
+        <p class="mt-2 max-w-sm text-muted-color">Record a transfer to update account balances.</p>
+        <p-button class="mt-6" label="Create" icon="pi pi-plus" (onClick)="openCreate()" />
+      </div>
+    } @else {
+      <ul class="flex flex-col gap-3">
+        @for (transfer of transfers(); track transfer.id) {
+          <li
+            class="rounded-2xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-800 dark:bg-surface-900"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0 flex-1">
+                <h2 class="font-medium">{{ transfer.name }}</h2>
+                <p class="mt-1 text-sm text-muted-color">{{ formatDate(transfer.date) }}</p>
+                <p class="mt-2 text-sm">
+                  <span class="font-medium">{{ transfer.fromAccountName }}</span>
+                  <i class="pi pi-arrow-right mx-2 text-muted-color"></i>
+                  <span class="font-medium">{{ transfer.toAccountName }}</span>
+                </p>
+                <p class="mt-2 font-semibold tabular-nums text-primary">
+                  {{ transferSummary(transfer) }}
+                </p>
+                @if (
+                  transfer.exchangeRate &&
+                  transfer.fromAccountCurrency !== transfer.toAccountCurrency
+                ) {
+                  <p class="mt-1 text-xs text-muted-color">
+                    Rate: {{ transfer.exchangeRate }}
+                  </p>
+                }
+              </div>
+              <p-button
+                icon="pi pi-trash"
+                [rounded]="true"
+                [text]="true"
+                severity="danger"
+                ariaLabel="Delete transfer"
+                (onClick)="confirmDelete(transfer, $event)"
+              />
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</main>
+
+<p-dialog
+  header="Create transfer"
+  [modal]="true"
+  [visible]="dialogVisible()"
+  (visibleChange)="dialogVisible.set($event)"
+  [style]="{ width: '100%', maxWidth: '28rem' }"
+  [draggable]="false"
+  (onHide)="closeDialog()"
+>
+  <form class="flex flex-col gap-4" [formGroup]="form" (ngSubmit)="save()">
+    @if (dialogErrorMessage(); as message) {
+      <p-message severity="error" [text]="message" styleClass="w-full" />
+    }
+
+    <div class="flex flex-col gap-1">
+      <label for="transfer-name" class="text-sm font-medium">Name</label>
+      <input
+        pInputText
+        id="transfer-name"
+        formControlName="name"
+        class="w-full"
+        autocomplete="off"
+        [invalid]="showError('name')"
+      />
+      @if (showError('name')) {
+        <small class="text-red-500">Name is required.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="transfer-date" class="text-sm font-medium">Date</label>
+      <p-datepicker
+        inputId="transfer-date"
+        formControlName="date"
+        [showIcon]="true"
+        dateFormat="dd M yy"
+        styleClass="w-full"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="from-account" class="text-sm font-medium">From account</label>
+      <p-select
+        inputId="from-account"
+        formControlName="fromAccountId"
+        [options]="accountOptions()"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="w-full"
+        (onChange)="onAccountsChange()"
+      />
+      @if (accountBalance(form.controls.fromAccountId.value); as balance) {
+        <small class="text-muted-color">Balance: <span class="font-medium tabular-nums">{{ balance }}</span></small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="to-account" class="text-sm font-medium">To account</label>
+      <p-select
+        inputId="to-account"
+        formControlName="toAccountId"
+        [options]="accountOptions()"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="w-full"
+        (onChange)="onAccountsChange()"
+      />
+      @if (accountBalance(form.controls.toAccountId.value); as balance) {
+        <small class="text-muted-color">Balance: <span class="font-medium tabular-nums">{{ balance }}</span></small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="amount-from" class="text-sm font-medium">Amount (from)</label>
+      <p-inputnumber
+        inputId="amount-from"
+        formControlName="amountFrom"
+        mode="decimal"
+        [minFractionDigits]="2"
+        [maxFractionDigits]="2"
+        styleClass="w-full"
+        inputStyleClass="w-full"
+        (onInput)="onAmountFromChange()"
+      />
+    </div>
+
+    @if (isCrossCurrency()) {
+      <div class="flex flex-col gap-1">
+        <label for="exchange-rate" class="text-sm font-medium">Exchange rate</label>
+        <p-inputnumber
+          inputId="exchange-rate"
+          formControlName="exchangeRate"
+          mode="decimal"
+          [minFractionDigits]="2"
+          [maxFractionDigits]="8"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+          (onInput)="onExchangeRateChange()"
+        />
+        <small class="text-muted-color">Amount to = amount from × rate</small>
+      </div>
+    }
+
+    <div class="flex flex-col gap-1">
+      <label for="amount-to" class="text-sm font-medium">Amount (to)</label>
+      <p-inputnumber
+        inputId="amount-to"
+        formControlName="amountTo"
+        mode="decimal"
+        [minFractionDigits]="2"
+        [maxFractionDigits]="2"
+        styleClass="w-full"
+        inputStyleClass="w-full"
+        [readonly]="!isCrossCurrency()"
+        (onInput)="onAmountToChange()"
+      />
+    </div>
+
+    <div class="flex justify-end gap-2 pt-2">
+      <p-button
+        type="button"
+        label="Cancel"
+        severity="secondary"
+        [text]="true"
+        (onClick)="closeDialog()"
+      />
+      <p-button type="submit" label="Create" [loading]="saving()" />
+    </div>
+  </form>
+</p-dialog>
+
+<p-confirmDialog />

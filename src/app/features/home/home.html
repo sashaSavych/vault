@@ -9,7 +9,7 @@
     <p-button label="Sign out" icon="pi pi-sign-out" severity="secondary" (onClick)="auth.signOut()" />
   </header>
 
-  <section class="mx-auto mt-12 w-full max-w-3xl">
+  <section class="mx-auto mt-12 flex w-full max-w-3xl flex-col gap-3">
     <a
       routerLink="/accounts"
       class="flex items-center gap-4 rounded-2xl border border-surface-200 bg-surface-0 p-6 no-underline transition-colors hover:border-primary/30 dark:border-surface-800 dark:bg-surface-900"
@@ -20,6 +20,19 @@
       <div class="flex-1">
         <h2 class="font-medium text-color">Accounts</h2>
         <p class="text-sm text-muted-color">Add, edit, and remove your wallets</p>
+      </div>
+      <i class="pi pi-chevron-right text-muted-color"></i>
+    </a>
+    <a
+      routerLink="/transfers"
+      class="flex items-center gap-4 rounded-2xl border border-surface-200 bg-surface-0 p-6 no-underline transition-colors hover:border-primary/30 dark:border-surface-800 dark:bg-surface-900"
+    >
+      <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <i class="pi pi-arrow-right-arrow-left text-xl"></i>
+      </div>
+      <div class="flex-1">
+        <h2 class="font-medium text-color">Transfers</h2>
+        <p class="text-sm text-muted-color">Move money between accounts</p>
       </div>
       <i class="pi pi-chevron-right text-muted-color"></i>
     </a>
