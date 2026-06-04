@@ -31,10 +31,12 @@ Run these in the Supabase **SQL Editor** in order (each file is safe to re-run):
 | `supabase/migrations/account.sql` | Accounts — balance, 4-digit `card_id` (default `0000`), RLS, default-account trigger |
 | `supabase/migrations/transfer.sql` | Transfers — balance updates via triggers (requires accounts) |
 | `supabase/migrations/category.sql` | Categories — tree, icons, `seed_default_categories()` |
+| `supabase/migrations/outcome.sql` | Outcomes — expenses, balance debit via triggers (requires accounts + categories) |
 
 - Accounts UI: `/accounts`
-- Transfers UI: `/transfers`
 - Categories UI: `/categories` — defaults seeded via `seed_default_categories()` when a type is empty
+- Outcomes UI: `/outcomes`
+- Transfers UI: `/transfers`
 
 ## GitHub Pages delivery
 
