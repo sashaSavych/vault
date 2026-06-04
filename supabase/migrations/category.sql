@@ -1,4 +1,5 @@
--- Categories for incomes and outcomes (parent grouping, icons). Safe to re-run.
+-- Categories for incomes and outcomes (tree, icons, default seed).
+-- Safe to re-run.
 
 create table if not exists public.categories (
   id uuid primary key default gen_random_uuid(),
@@ -11,7 +12,6 @@ create table if not exists public.categories (
   created_at timestamptz not null default now()
 );
 
--- Upgrade older installs that ran 005 before parent/icon existed.
 alter table public.categories
   add column if not exists parent_id uuid references public.categories (id) on delete cascade;
 
@@ -65,7 +65,6 @@ create policy "categories_delete_own"
   to authenticated
   using (auth.uid() = user_id);
 
--- Default income/outcome categories (per user). Call: select seed_default_categories();
 create or replace function public.seed_default_categories()
 returns void
 language plpgsql

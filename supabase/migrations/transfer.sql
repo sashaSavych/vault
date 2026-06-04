@@ -1,4 +1,5 @@
--- Transfers between accounts; balances update via triggers. Safe to re-run.
+-- Transfers between accounts; balances update via triggers.
+-- Safe to re-run. Requires account.sql.
 
 create table if not exists public.transfers (
   id uuid primary key default gen_random_uuid(),

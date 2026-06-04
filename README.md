@@ -22,19 +22,19 @@ Angular app with [PrimeNG](https://primeng.org/) and [Tailwind CSS](https://tail
 
 Auth routes: `/login`, `/signup`. The home route (`/`) requires a signed-in session.
 
-## Database (accounts)
+## Database
 
-Run `supabase/migrations/001_accounts.sql` in the Supabase **SQL Editor** (safe to re-run). It creates the `accounts` table, `balance` column, RLS policies, and default-account trigger. Each row is scoped to `auth.uid()`.
+Run these in the Supabase **SQL Editor** in order (each file is safe to re-run):
 
-Accounts UI: `/accounts` (list, add, edit, delete). Run `008_accounts_id_required.sql` for the 4-digit account ID (`card_id`, default `0000`).
+| File | Entity |
+|------|--------|
+| `supabase/migrations/account.sql` | Accounts — balance, 4-digit `card_id` (default `0000`), RLS, default-account trigger |
+| `supabase/migrations/transfer.sql` | Transfers — balance updates via triggers (requires accounts) |
+| `supabase/migrations/category.sql` | Categories — tree, icons, `seed_default_categories()` |
 
-Run `supabase/migrations/004_transfers.sql` for transfers (updates balances via triggers).
-
-Transfers UI: `/transfers` (list, create, delete; cross-currency rate support).
-
-Run `supabase/migrations/005_categories.sql` for categories (table, RLS, `seed_default_categories()`). If 005 was applied earlier, also run `006_seed_default_categories.sql`.
-
-Categories UI: `/categories` — all categories live in Supabase; defaults are seeded via `seed_default_categories()` when a type is empty.
+- Accounts UI: `/accounts`
+- Transfers UI: `/transfers`
+- Categories UI: `/categories` — defaults seeded via `seed_default_categories()` when a type is empty
 
 ## GitHub Pages delivery
 
