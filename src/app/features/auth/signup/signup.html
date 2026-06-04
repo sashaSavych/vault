@@ -1,0 +1,79 @@
+<app-auth-layout>
+  <h1 class="mb-1 text-xl font-semibold">Create account</h1>
+  <p class="mb-6 text-sm text-muted-color">Start tracking your finances.</p>
+
+  @if (errorMessage(); as message) {
+    <p-message severity="error" [text]="message" styleClass="mb-4 w-full" />
+  }
+
+  @if (successMessage(); as message) {
+    <p-message severity="success" [text]="message" styleClass="mb-4 w-full" />
+  }
+
+  <form class="flex flex-col gap-4" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="flex flex-col gap-1">
+      <label for="email" class="text-sm font-medium">Email</label>
+      <input
+        pInputText
+        id="email"
+        type="email"
+        autocomplete="email"
+        formControlName="email"
+        class="w-full"
+        [invalid]="showError('email')"
+      />
+      @if (showError('email')) {
+        <small class="text-red-500">Enter a valid email.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="password" class="text-sm font-medium">Password</label>
+      <p-password
+        inputId="password"
+        formControlName="password"
+        [feedback]="true"
+        toggleMask
+        autocomplete="new-password"
+        styleClass="w-full"
+        inputStyleClass="w-full"
+        [invalid]="showError('password')"
+      />
+      @if (showError('password')) {
+        <small class="text-red-500">Password must be at least 6 characters.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="confirmPassword" class="text-sm font-medium">Confirm password</label>
+      <p-password
+        inputId="confirmPassword"
+        formControlName="confirmPassword"
+        [feedback]="false"
+        toggleMask
+        autocomplete="new-password"
+        styleClass="w-full"
+        inputStyleClass="w-full"
+        [invalid]="showError('confirmPassword') || showPasswordMismatch()"
+      />
+      @if (showError('confirmPassword')) {
+        <small class="text-red-500">Confirm your password.</small>
+      } @else if (showPasswordMismatch()) {
+        <small class="text-red-500">Passwords do not match.</small>
+      }
+    </div>
+
+    <p-button
+      type="submit"
+      label="Sign up"
+      styleClass="w-full"
+      [loading]="loading()"
+      [disabled]="loading()"
+    />
+
+    <p class="text-center text-sm text-muted-color">
+      Already have an account?
+      <a routerLink="/login" class="font-medium text-primary no-underline hover:underline">Sign in</a>
+    </p>
+  </form>
+</app-auth-layout>

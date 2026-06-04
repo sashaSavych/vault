@@ -18,6 +18,7 @@
 .env
 .env.*
 !.env.example
+src/environments/environment.ts
 *.pem
 *.key
 credentials.json
