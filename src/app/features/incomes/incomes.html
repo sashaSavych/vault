@@ -29,13 +29,14 @@
     </div>
   </header>
 
-  <section class="mx-auto mt-8 w-full max-w-3xl">
+  <section id="income-list" class="mx-auto mt-8 w-full max-w-3xl">
     @if (errorMessage(); as message) {
       <p-message severity="error" [text]="message" styleClass="mb-4 w-full" />
     }
 
     @if (!loading() && accounts().length > 0) {
       <div
+        id="filters"
         class="mb-4 flex flex-col gap-3 rounded-2xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-800 dark:bg-surface-900"
       >
         <p class="text-sm font-medium">Filters</p>

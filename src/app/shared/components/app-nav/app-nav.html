@@ -1,0 +1,26 @@
+<nav class="app-nav" aria-label="App navigation">
+  @if (currentPage()?.sections; as sections) {
+    <div class="app-nav__sections">
+      @for (section of sections; track section.id) {
+        <button type="button" class="app-nav__section" (click)="scrollToSection(section.id)">
+          {{ section.label }}
+        </button>
+      }
+    </div>
+  }
+
+  <div class="app-nav__pages">
+    @for (page of pages; track page.path) {
+      <a
+        [routerLink]="page.path"
+        routerLinkActive="app-nav__page--active"
+        [routerLinkActiveOptions]="{ exact: page.path === '/' }"
+        class="app-nav__page"
+        [attr.aria-label]="page.label"
+      >
+        <i [class]="'pi ' + page.icon"></i>
+        <span>{{ page.label }}</span>
+      </a>
+    }
+  </div>
+</nav>
