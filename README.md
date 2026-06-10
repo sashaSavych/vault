@@ -31,6 +31,7 @@ Run these in the Supabase **SQL Editor** in order (each file is safe to re-run):
 | `supabase/migrations/account.sql` | Accounts — balance, 4-digit `card_id` (default `0000`), RLS, default-account trigger |
 | `supabase/migrations/transfer.sql` | Transfers — balance updates via triggers (requires accounts) |
 | `supabase/migrations/category.sql` | Categories — tree, icons, `seed_default_categories()` |
+| `supabase/migrations/income.sql` | Incomes — earnings, balance credit via triggers (requires accounts + categories) |
 | `supabase/migrations/outcome.sql` | Outcomes — expenses, balance debit via triggers (requires accounts + categories) |
 
 - Accounts UI: `/accounts`

@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/auth/auth.guard';
 import { Accounts } from './features/accounts/accounts';
 import { Categories } from './features/categories/categories';
+import { Incomes } from './features/incomes/incomes';
 import { Outcomes } from './features/outcomes/outcomes';
 import { Transfers } from './features/transfers/transfers';
 import { Home } from './features/home/home';
@@ -18,6 +19,11 @@ export const routes: Routes = [
   {
     path: 'accounts',
     component: Accounts,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'incomes',
+    component: Incomes,
     canActivate: [authGuard],
   },
   {
