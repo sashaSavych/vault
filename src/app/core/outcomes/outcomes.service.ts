@@ -80,6 +80,36 @@ export class OutcomesService {
     return mapOutcome(data as OutcomeRow);
   }
 
+  async createMany(inputs: OutcomeInput[]): Promise<number> {
+    if (inputs.length === 0) {
+      return 0;
+    }
+
+    for (const input of inputs) {
+      this.validate(input);
+    }
+
+    const { data, error } = await this.supabase
+      .from('outcomes')
+      .insert(
+        inputs.map((input) => ({
+          user_id: this.requireUserId(),
+          name: input.name.trim(),
+          account_id: input.accountId,
+          category_id: input.categoryId,
+          amount: input.amount,
+          date: input.date,
+        })),
+      )
+      .select('id');
+
+    if (error) {
+      throw error;
+    }
+
+    return data?.length ?? inputs.length;
+  }
+
   async remove(id: string): Promise<void> {
     const { error } = await this.supabase.from('outcomes').delete().eq('id', id);
 

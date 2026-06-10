@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
@@ -11,13 +11,25 @@ import { InputText } from 'primeng/inputtext';
 import { Message } from 'primeng/message';
 import { Select } from 'primeng/select';
 
+import { environment } from '../../../environments/environment';
 import { AccountsService } from '../../core/accounts/accounts.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { CategoryMatchService } from '../../core/categories/category-match.service';
 import { CategoriesService } from '../../core/categories/categories.service';
 import type { Account } from '../../core/models/account';
 import type { Category } from '../../core/models/category';
 import type { OutcomeWithDetails } from '../../core/models/outcome';
 import { OutcomesService } from '../../core/outcomes/outcomes.service';
+import {
+  buildOutcomeImports,
+  extractBankCategories,
+  fallbackCategoryMapping,
+  gridToStatementText,
+  isImportSavable,
+  parseStatementGrid,
+  toOutcomeInput,
+} from '../../shared/utils/parse-statement';
+import { readStatementXlsx } from '../../shared/utils/read-xlsx';
 import { categorySelectOptions } from '../../shared/utils/category-select-options';
 import { formatBalance } from '../../shared/utils/format-balance';
 import { formatDate, toIsoDateString } from '../../shared/utils/format-date';
@@ -45,8 +57,11 @@ export class Outcomes implements OnInit {
   private readonly outcomesService = inject(OutcomesService);
   private readonly accountsService = inject(AccountsService);
   private readonly categoriesService = inject(CategoriesService);
+  private readonly categoryMatch = inject(CategoryMatchService);
   private readonly confirmation = inject(ConfirmationService);
   private readonly fb = inject(FormBuilder);
+
+  private readonly importInput = viewChild<ElementRef<HTMLInputElement>>('importInput');
 
   protected readonly auth = inject(AuthService);
   protected readonly formatBalance = formatBalance;
@@ -56,8 +71,10 @@ export class Outcomes implements OnInit {
   protected readonly categories = signal<Category[]>([]);
   protected readonly outcomes = signal<OutcomeWithDetails[]>([]);
   protected readonly loading = signal(true);
+  protected readonly importing = signal(false);
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly successMessage = signal<string | null>(null);
   protected readonly dialogErrorMessage = signal<string | null>(null);
   protected readonly dialogVisible = signal(false);
 
@@ -137,6 +154,125 @@ export class Outcomes implements OnInit {
     this.dialogErrorMessage.set(null);
   }
 
+  protected openImportPicker(): void {
+    if (this.accounts().length === 0) {
+      this.errorMessage.set('Create at least one account before importing.');
+      return;
+    }
+
+    if (this.categories().length === 0) {
+      this.errorMessage.set('Add at least one outcome category first.');
+      return;
+    }
+
+    this.errorMessage.set(null);
+    this.importInput()?.nativeElement.click();
+  }
+
+  protected onImportFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    void this.importFromFile(file);
+  }
+
+  private async importFromFile(file: File): Promise<void> {
+    this.importing.set(true);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    try {
+      const grid = await readStatementXlsx(file);
+      const rows = parseStatementGrid(grid);
+      const bankCategories = extractBankCategories(rows);
+      const statementText = gridToStatementText(grid);
+      let categoryMapping: Record<string, string> = {};
+      let matchSource = 'fallback';
+
+      if (environment.chatAiEndpoint?.trim()) {
+        try {
+          const match = await this.categoryMatch.matchFromStatement(statementText);
+          categoryMapping = match.mapping;
+          matchSource = 'edge-function';
+          console.log('Category match:', {
+            model: match.model,
+            fromDb: match.fromDb,
+            fromExact: match.fromExact,
+            fromAi: match.fromAi,
+          });
+        } catch (error) {
+          console.warn('Category match failed, using Other fallback:', error);
+        }
+      }
+
+      if (Object.keys(categoryMapping).length === 0) {
+        categoryMapping = fallbackCategoryMapping(bankCategories, this.categories());
+      }
+
+      const items = buildOutcomeImports(
+        rows,
+        this.accounts(),
+        this.categories(),
+        categoryMapping,
+      );
+
+      const savable = items.filter(isImportSavable);
+      const skipped = items.length - savable.length;
+
+      if (savable.length === 0) {
+        throw new Error(
+          skipped > 0
+            ? `No rows could be imported (${skipped} skipped). Check console for details.`
+            : 'No debit rows found in the file.',
+        );
+      }
+
+      const saved = await this.outcomesService.createMany(savable.map(toOutcomeInput));
+
+      console.group('Outcome import');
+      console.log('Source:', file.name);
+      console.log('Category mapping source:', matchSource);
+      console.log('Debit rows parsed:', rows.length);
+      console.log('Saved to DB:', saved);
+      console.log('Skipped:', skipped);
+      console.table(
+        items.map((item) => ({
+          name: item.name,
+          date: item.date,
+          amount: item.amount,
+          card: item.cardLast4 ?? '',
+          accountId: item.accountCardId ?? '',
+          account: item.accountFallback
+            ? `${item.accountName} (fallback)`
+            : (item.accountName ?? ''),
+          bankCategory: item.bankCategory,
+          category: item.categoryName ?? item.categoryId,
+          saved: isImportSavable(item) ? 'yes' : 'no',
+          error: item.error ?? '',
+        })),
+      );
+      console.groupEnd();
+
+      await this.reload();
+
+      const summary =
+        skipped > 0
+          ? `Imported ${saved} outcome${saved === 1 ? '' : 's'}. ${skipped} row${skipped === 1 ? '' : 's'} skipped.`
+          : `Imported ${saved} outcome${saved === 1 ? '' : 's'}.`;
+      this.successMessage.set(summary);
+    } catch (error) {
+      console.error('Import failed:', error);
+      this.errorMessage.set(toErrorMessage(error));
+    } finally {
+      this.importing.set(false);
+    }
+  }
+
   protected async applyFilters(): Promise<void> {
     await this.reloadOutcomes();
   }
@@ -214,6 +350,7 @@ export class Outcomes implements OnInit {
   private async reload(): Promise<void> {
     this.loading.set(true);
     this.errorMessage.set(null);
+    this.successMessage.set(null);
 
     try {
       await this.categoriesService.ensureDefaults();

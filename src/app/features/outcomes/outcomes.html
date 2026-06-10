@@ -14,6 +14,22 @@
       </div>
     </div>
     <div class="flex gap-2">
+      <input
+        #importInput
+        type="file"
+        accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        class="hidden"
+        (change)="onImportFileSelected($event)"
+      />
+      <p-button
+        label="Import"
+        icon="pi pi-upload"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="openImportPicker()"
+        [loading]="importing()"
+        [disabled]="accounts().length === 0 || categories().length === 0"
+      />
       <p-button
         label="Create"
         icon="pi pi-plus"
@@ -32,6 +48,10 @@
   <section class="mx-auto mt-8 w-full max-w-3xl">
     @if (errorMessage(); as message) {
       <p-message severity="error" [text]="message" styleClass="mb-4 w-full" />
+    }
+
+    @if (successMessage(); as message) {
+      <p-message severity="success" [text]="message" styleClass="mb-4 w-full" />
     }
 
     @if (!loading() && accounts().length > 0) {

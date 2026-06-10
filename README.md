@@ -36,7 +36,7 @@ Run these in the Supabase **SQL Editor** in order (each file is safe to re-run):
 
 - Accounts UI: `/accounts`
 - Categories UI: `/categories` — defaults seeded via `seed_default_categories()` when a type is empty
-- Outcomes UI: `/outcomes`
+- Outcomes UI: `/outcomes` — import bank `.xlsx` statements ([docs/outcome-import.md](docs/outcome-import.md))
 - Transfers UI: `/transfers`
 
 ## GitHub Pages delivery
