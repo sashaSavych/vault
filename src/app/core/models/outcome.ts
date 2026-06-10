@@ -36,6 +36,7 @@ export interface OutcomeWithDetails extends Outcome {
 
 export interface OutcomeListFilters {
   accountId?: string;
+  categoryId?: string;
   dateFrom?: string;
   dateTo?: string;
 }

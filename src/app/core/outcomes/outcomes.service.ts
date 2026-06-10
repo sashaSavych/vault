@@ -33,6 +33,9 @@ export class OutcomesService {
     if (filters.accountId) {
       query = query.eq('account_id', filters.accountId);
     }
+    if (filters.categoryId) {
+      query = query.eq('category_id', filters.categoryId);
+    }
     if (filters.dateFrom) {
       query = query.gte('date', filters.dateFrom);
     }

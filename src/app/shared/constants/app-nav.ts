@@ -51,11 +51,20 @@ export const APP_NAV_PAGES: NavPage[] = [
     icon: 'pi-arrow-right-arrow-left',
     sections: [{ id: 'transfer-list', label: 'List' }],
   },
+  {
+    path: '/reports',
+    label: 'Reports',
+    icon: 'pi-chart-bar',
+    sections: [{ id: 'reports-list', label: 'List' }],
+  },
 ];
 
 export function navPageForPath(path: string): NavPage | undefined {
   if (path === '/') {
     return APP_NAV_PAGES[0];
   }
-  return APP_NAV_PAGES.find((page) => path.startsWith(page.path) && page.path !== '/');
+
+  return [...APP_NAV_PAGES]
+    .filter((page) => page.path !== '/' && path.startsWith(page.path))
+    .sort((a, b) => b.path.length - a.path.length)[0];
 }

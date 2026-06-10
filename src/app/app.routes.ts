@@ -5,6 +5,8 @@ import { Accounts } from './features/accounts/accounts';
 import { Categories } from './features/categories/categories';
 import { Incomes } from './features/incomes/incomes';
 import { Outcomes } from './features/outcomes/outcomes';
+import { OutcomesByCategoryReport } from './features/reports/outcomes-by-category/outcomes-by-category';
+import { Reports } from './features/reports/reports';
 import { Transfers } from './features/transfers/transfers';
 import { Home } from './features/home/home';
 import { Login } from './features/auth/login/login';
@@ -39,6 +41,16 @@ export const routes: Routes = [
   {
     path: 'categories',
     component: Categories,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'reports',
+    component: Reports,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'reports/outcomes-by-category',
+    component: OutcomesByCategoryReport,
     canActivate: [authGuard],
   },
   {
