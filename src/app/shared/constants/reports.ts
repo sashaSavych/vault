@@ -14,4 +14,11 @@ export const REPORTS: ReportDefinition[] = [
     route: '/reports/outcomes-by-category',
     icon: 'pi-chart-pie',
   },
+  {
+    id: 'incomes-by-category',
+    title: 'Incomes by category',
+    description: 'Income totals grouped by income category',
+    route: '/reports/incomes-by-category',
+    icon: 'pi-chart-bar',
+  },
 ];

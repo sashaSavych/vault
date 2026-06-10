@@ -36,6 +36,7 @@ export interface IncomeWithDetails extends Income {
 
 export interface IncomeListFilters {
   accountId?: string;
+  categoryId?: string;
   dateFrom?: string;
   dateTo?: string;
 }
