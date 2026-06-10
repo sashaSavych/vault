@@ -82,6 +82,7 @@ export class IncomesService {
 
   async update(id: string, input: IncomeInput): Promise<Income> {
     this.validate(input);
+    const userId = this.requireUserId();
 
     const { data, error } = await this.supabase
       .from('incomes')
@@ -93,14 +94,21 @@ export class IncomesService {
         date: input.date,
       })
       .eq('id', id)
-      .select('*')
-      .single();
+      .eq('user_id', userId)
+      .select('*');
 
     if (error) {
       throw error;
     }
 
-    return mapIncome(data as IncomeRow);
+    const row = (data as IncomeRow[] | null)?.[0];
+    if (!row) {
+      throw new Error(
+        'Income was not updated. Re-run supabase/migrations/income.sql in the Supabase SQL Editor.',
+      );
+    }
+
+    return mapIncome(row);
   }
 
   async remove(id: string): Promise<void> {

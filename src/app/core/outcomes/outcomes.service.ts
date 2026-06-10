@@ -112,6 +112,7 @@ export class OutcomesService {
 
   async update(id: string, input: OutcomeInput): Promise<Outcome> {
     this.validate(input);
+    const userId = this.requireUserId();
 
     const { data, error } = await this.supabase
       .from('outcomes')
@@ -123,14 +124,21 @@ export class OutcomesService {
         date: input.date,
       })
       .eq('id', id)
-      .select('*')
-      .single();
+      .eq('user_id', userId)
+      .select('*');
 
     if (error) {
       throw error;
     }
 
-    return mapOutcome(data as OutcomeRow);
+    const row = (data as OutcomeRow[] | null)?.[0];
+    if (!row) {
+      throw new Error(
+        'Outcome was not updated. Re-run supabase/migrations/outcome.sql in the Supabase SQL Editor.',
+      );
+    }
+
+    return mapOutcome(row);
   }
 
   async remove(id: string): Promise<void> {

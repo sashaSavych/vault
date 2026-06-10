@@ -33,6 +33,7 @@ Run these in the Supabase **SQL Editor** in order (each file is safe to re-run):
 | `supabase/migrations/category.sql` | Categories — tree, icons, `seed_default_categories()` |
 | `supabase/migrations/income.sql` | Incomes — earnings, balance credit via triggers (requires accounts + categories) |
 | `supabase/migrations/outcome.sql` | Outcomes — expenses, balance debit via triggers (requires accounts + categories) |
+| `supabase/migrations/outcome-income-update.sql` | Patch — edit incomes/outcomes if updates fail (update RLS + balance triggers) |
 
 - Accounts UI: `/accounts`
 - Categories UI: `/categories` — defaults seeded via `seed_default_categories()` when a type is empty
