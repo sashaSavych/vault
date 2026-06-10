@@ -80,6 +80,29 @@ export class IncomesService {
     return mapIncome(data as IncomeRow);
   }
 
+  async update(id: string, input: IncomeInput): Promise<Income> {
+    this.validate(input);
+
+    const { data, error } = await this.supabase
+      .from('incomes')
+      .update({
+        name: input.name.trim(),
+        account_id: input.accountId,
+        category_id: input.categoryId,
+        amount: input.amount,
+        date: input.date,
+      })
+      .eq('id', id)
+      .select('*')
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return mapIncome(data as IncomeRow);
+  }
+
   async remove(id: string): Promise<void> {
     const { error } = await this.supabase.from('incomes').delete().eq('id', id);
 

@@ -49,6 +49,24 @@ create policy "incomes_delete_own"
   to authenticated
   using (auth.uid() = user_id);
 
+drop policy if exists "incomes_update_own" on public.incomes;
+create policy "incomes_update_own"
+  on public.incomes
+  for update
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (
+    auth.uid() = user_id
+    and exists (
+      select 1 from public.accounts a
+      where a.id = account_id and a.user_id = auth.uid()
+    )
+    and exists (
+      select 1 from public.categories c
+      where c.id = category_id and c.user_id = auth.uid() and c.type = 'income'
+    )
+  );
+
 create or replace function public.incomes_apply_balance()
 returns trigger
 language plpgsql
@@ -57,6 +75,15 @@ set search_path = public
 as $$
 begin
   if tg_op = 'INSERT' then
+    update public.accounts
+    set balance = balance + new.amount
+    where id = new.account_id and user_id = new.user_id;
+    return new;
+  elsif tg_op = 'UPDATE' then
+    update public.accounts
+    set balance = balance - old.amount
+    where id = old.account_id and user_id = old.user_id;
+
     update public.accounts
     set balance = balance + new.amount
     where id = new.account_id and user_id = new.user_id;
@@ -83,5 +110,11 @@ create trigger incomes_balance_delete
   for each row
   execute function public.incomes_apply_balance();
 
-grant select, insert, delete on table public.incomes to authenticated;
+drop trigger if exists incomes_balance_update on public.incomes;
+create trigger incomes_balance_update
+  after update on public.incomes
+  for each row
+  execute function public.incomes_apply_balance();
+
+grant select, insert, update, delete on table public.incomes to authenticated;
 grant all on table public.incomes to service_role;

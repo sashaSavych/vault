@@ -15,6 +15,11 @@ export function toIsoDateString(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+export function parseIsoDate(isoDate: string): Date {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 export function todayIsoDate(): string {
   return toIsoDateString(new Date());
 }

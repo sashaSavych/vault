@@ -118,6 +118,7 @@ export class Categories implements OnInit {
       parentId: parentId ?? NO_PARENT,
       icon: 'pi-tag',
     });
+    this.syncFormDisabledState();
     this.dialogVisible.set(true);
   }
 
@@ -131,6 +132,7 @@ export class Categories implements OnInit {
       parentId: category.parentId ?? NO_PARENT,
       icon: category.icon,
     });
+    this.syncFormDisabledState();
     this.dialogVisible.set(true);
   }
 
@@ -139,6 +141,8 @@ export class Categories implements OnInit {
     this.editingId.set(null);
     this.presetParentId.set(null);
     this.dialogErrorMessage.set(null);
+    this.form.controls.type.enable({ emitEvent: false });
+    this.form.controls.parentId.enable({ emitEvent: false });
   }
 
   protected async save(): Promise<void> {
@@ -202,8 +206,21 @@ export class Categories implements OnInit {
     return control.invalid && control.touched;
   }
 
-  protected isParentSelectDisabled(): boolean {
-    return !!this.presetParentId();
+  private syncFormDisabledState(): void {
+    const disableType = !!this.editingId() || !!this.presetParentId();
+    const disableParent = !!this.presetParentId();
+
+    if (disableType) {
+      this.form.controls.type.disable({ emitEvent: false });
+    } else {
+      this.form.controls.type.enable({ emitEvent: false });
+    }
+
+    if (disableParent) {
+      this.form.controls.parentId.disable({ emitEvent: false });
+    } else {
+      this.form.controls.parentId.enable({ emitEvent: false });
+    }
   }
 
   private hasSubcategories(categoryId: string): boolean {

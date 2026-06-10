@@ -20,7 +20,7 @@ import type { Category } from '../../core/models/category';
 import type { IncomeWithDetails } from '../../core/models/income';
 import { categorySelectOptions } from '../../shared/utils/category-select-options';
 import { formatBalance } from '../../shared/utils/format-balance';
-import { formatDate, toIsoDateString } from '../../shared/utils/format-date';
+import { formatDate, parseIsoDate, toIsoDateString } from '../../shared/utils/format-date';
 import { toErrorMessage } from '../../shared/utils/to-error-message';
 
 @Component({
@@ -60,6 +60,11 @@ export class Incomes implements OnInit {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly dialogErrorMessage = signal<string | null>(null);
   protected readonly dialogVisible = signal(false);
+  protected readonly editingId = signal<string | null>(null);
+
+  protected readonly dialogTitle = computed(() =>
+    this.editingId() ? 'Edit income' : 'Create income',
+  );
 
   protected readonly filterAccountId = signal<string | null>(null);
   protected readonly filterDateFrom = signal<Date | null>(null);
@@ -120,6 +125,7 @@ export class Incomes implements OnInit {
 
     const defaultAccount = accs.find((a) => a.isDefault) ?? accs[0];
 
+    this.editingId.set(null);
     this.errorMessage.set(null);
     this.dialogErrorMessage.set(null);
     this.form.reset({
@@ -132,8 +138,22 @@ export class Incomes implements OnInit {
     this.dialogVisible.set(true);
   }
 
+  protected openEdit(income: IncomeWithDetails): void {
+    this.editingId.set(income.id);
+    this.dialogErrorMessage.set(null);
+    this.form.reset({
+      name: income.name,
+      amount: income.amount,
+      date: parseIsoDate(income.date),
+      categoryId: income.categoryId,
+      accountId: income.accountId,
+    });
+    this.dialogVisible.set(true);
+  }
+
   protected closeDialog(): void {
     this.dialogVisible.set(false);
+    this.editingId.set(null);
     this.dialogErrorMessage.set(null);
   }
 
@@ -160,13 +180,20 @@ export class Incomes implements OnInit {
     this.dialogErrorMessage.set(null);
 
     try {
-      await this.incomesService.create({
+      const input = {
         name: raw.name,
         accountId: raw.accountId,
         categoryId: raw.categoryId,
         amount: raw.amount,
         date: toIsoDateString(raw.date),
-      });
+      };
+
+      const id = this.editingId();
+      if (id) {
+        await this.incomesService.update(id, input);
+      } else {
+        await this.incomesService.create(input);
+      }
 
       this.closeDialog();
       await this.reload();

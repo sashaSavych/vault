@@ -158,14 +158,24 @@
                   +{{ formatBalance(income.amount, income.accountCurrency) }}
                 </p>
               </div>
-              <p-button
-                icon="pi pi-trash"
-                [rounded]="true"
-                [text]="true"
-                severity="danger"
-                ariaLabel="Delete income"
-                (onClick)="confirmDelete(income, $event)"
-              />
+              <div class="flex shrink-0 gap-1">
+                <p-button
+                  icon="pi pi-pencil"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="secondary"
+                  ariaLabel="Edit income"
+                  (onClick)="openEdit(income)"
+                />
+                <p-button
+                  icon="pi pi-trash"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="danger"
+                  ariaLabel="Delete income"
+                  (onClick)="confirmDelete(income, $event)"
+                />
+              </div>
             </div>
           </li>
         }
@@ -175,7 +185,7 @@
 </main>
 
 <p-dialog
-  header="Create income"
+  [header]="dialogTitle()"
   [modal]="true"
   [visible]="dialogVisible()"
   (visibleChange)="dialogVisible.set($event)"
@@ -204,6 +214,38 @@
     </div>
 
     <div class="flex flex-col gap-1">
+      <label for="income-account" class="text-sm font-medium">Account</label>
+      <p-select
+        inputId="income-account"
+        formControlName="accountId"
+        [options]="formAccountOptions()"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="w-full"
+      />
+      @if (accountBalance(form.controls.accountId.value); as balance) {
+        <small class="text-muted-color"
+          >Balance:
+          <span class="font-medium tabular-nums">{{ balance }}</span></small
+        >
+      }
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="income-category" class="text-sm font-medium">Category</label>
+      <p-select
+        inputId="income-category"
+        formControlName="categoryId"
+        [options]="categoryOptions()"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="w-full"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1">
       <label for="income-amount" class="text-sm font-medium">Amount</label>
       <p-inputnumber
         inputId="income-amount"
@@ -223,38 +265,9 @@
         formControlName="date"
         [showIcon]="true"
         dateFormat="dd M yy"
+        appendTo="body"
         styleClass="w-full"
       />
-    </div>
-
-    <div class="flex flex-col gap-1">
-      <label for="income-category" class="text-sm font-medium">Category</label>
-      <p-select
-        inputId="income-category"
-        formControlName="categoryId"
-        [options]="categoryOptions()"
-        optionLabel="label"
-        optionValue="value"
-        styleClass="w-full"
-      />
-    </div>
-
-    <div class="flex flex-col gap-1">
-      <label for="income-account" class="text-sm font-medium">Account</label>
-      <p-select
-        inputId="income-account"
-        formControlName="accountId"
-        [options]="formAccountOptions()"
-        optionLabel="label"
-        optionValue="value"
-        styleClass="w-full"
-      />
-      @if (accountBalance(form.controls.accountId.value); as balance) {
-        <small class="text-muted-color"
-          >Balance:
-          <span class="font-medium tabular-nums">{{ balance }}</span></small
-        >
-      }
     </div>
 
     <div class="flex justify-end gap-2 pt-2">
@@ -265,7 +278,7 @@
         [text]="true"
         (onClick)="closeDialog()"
       />
-      <p-button type="submit" label="Create" [loading]="saving()" />
+      <p-button type="submit" [label]="editingId() ? 'Save' : 'Create'" [loading]="saving()" />
     </div>
   </form>
 </p-dialog>

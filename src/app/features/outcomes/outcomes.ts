@@ -32,7 +32,7 @@ import {
 import { readStatementXlsx } from '../../shared/utils/read-xlsx';
 import { categorySelectOptions } from '../../shared/utils/category-select-options';
 import { formatBalance } from '../../shared/utils/format-balance';
-import { formatDate, toIsoDateString } from '../../shared/utils/format-date';
+import { formatDate, parseIsoDate, toIsoDateString } from '../../shared/utils/format-date';
 import { toErrorMessage } from '../../shared/utils/to-error-message';
 
 @Component({
@@ -77,6 +77,12 @@ export class Outcomes implements OnInit {
   protected readonly successMessage = signal<string | null>(null);
   protected readonly dialogErrorMessage = signal<string | null>(null);
   protected readonly dialogVisible = signal(false);
+  protected readonly editingId = signal<string | null>(null);
+  protected readonly editingOutcome = signal<OutcomeWithDetails | null>(null);
+
+  protected readonly dialogTitle = computed(() =>
+    this.editingId() ? 'Edit outcome' : 'Create outcome',
+  );
 
   protected readonly filterAccountId = signal<string | null>(null);
   protected readonly filterDateFrom = signal<Date | null>(null);
@@ -137,6 +143,8 @@ export class Outcomes implements OnInit {
 
     const defaultAccount = accs.find((a) => a.isDefault) ?? accs[0];
 
+    this.editingId.set(null);
+    this.editingOutcome.set(null);
     this.errorMessage.set(null);
     this.dialogErrorMessage.set(null);
     this.form.reset({
@@ -149,8 +157,24 @@ export class Outcomes implements OnInit {
     this.dialogVisible.set(true);
   }
 
+  protected openEdit(outcome: OutcomeWithDetails): void {
+    this.editingId.set(outcome.id);
+    this.editingOutcome.set(outcome);
+    this.dialogErrorMessage.set(null);
+    this.form.reset({
+      name: outcome.name,
+      amount: outcome.amount,
+      date: parseIsoDate(outcome.date),
+      categoryId: outcome.categoryId,
+      accountId: outcome.accountId,
+    });
+    this.dialogVisible.set(true);
+  }
+
   protected closeDialog(): void {
     this.dialogVisible.set(false);
+    this.editingId.set(null);
+    this.editingOutcome.set(null);
     this.dialogErrorMessage.set(null);
   }
 
@@ -291,24 +315,46 @@ export class Outcomes implements OnInit {
     }
 
     const raw = this.form.getRawValue();
-    const account = this.accounts().find((a) => a.id === raw.accountId);
+    const editing = this.editingOutcome();
 
-    if (account && account.balance < raw.amount) {
-      this.dialogErrorMessage.set('Insufficient balance in this account.');
-      return;
+    if (editing) {
+      const account = this.accounts().find((a) => a.id === raw.accountId);
+      if (account) {
+        const available =
+          raw.accountId === editing.accountId
+            ? account.balance + editing.amount
+            : account.balance;
+        if (available < raw.amount) {
+          this.dialogErrorMessage.set('Insufficient balance in this account.');
+          return;
+        }
+      }
+    } else {
+      const account = this.accounts().find((a) => a.id === raw.accountId);
+      if (account && account.balance < raw.amount) {
+        this.dialogErrorMessage.set('Insufficient balance in this account.');
+        return;
+      }
     }
 
     this.saving.set(true);
     this.dialogErrorMessage.set(null);
 
+    const input = {
+      name: raw.name,
+      accountId: raw.accountId,
+      categoryId: raw.categoryId,
+      amount: raw.amount,
+      date: toIsoDateString(raw.date),
+    };
+
     try {
-      await this.outcomesService.create({
-        name: raw.name,
-        accountId: raw.accountId,
-        categoryId: raw.categoryId,
-        amount: raw.amount,
-        date: toIsoDateString(raw.date),
-      });
+      const id = this.editingId();
+      if (id) {
+        await this.outcomesService.update(id, input);
+      } else {
+        await this.outcomesService.create(input);
+      }
 
       this.closeDialog();
       await this.reload();

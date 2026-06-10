@@ -269,7 +269,6 @@
         optionLabel="label"
         optionValue="value"
         styleClass="w-full"
-        [disabled]="!!editingId() || !!presetParentId()"
       />
     </div>
 
@@ -282,7 +281,6 @@
         optionLabel="label"
         optionValue="value"
         styleClass="w-full"
-        [disabled]="isParentSelectDisabled()"
       />
       <small class="text-muted-color">{{ parentFieldHint() }}</small>
     </div>

@@ -110,6 +110,29 @@ export class OutcomesService {
     return data?.length ?? inputs.length;
   }
 
+  async update(id: string, input: OutcomeInput): Promise<Outcome> {
+    this.validate(input);
+
+    const { data, error } = await this.supabase
+      .from('outcomes')
+      .update({
+        name: input.name.trim(),
+        account_id: input.accountId,
+        category_id: input.categoryId,
+        amount: input.amount,
+        date: input.date,
+      })
+      .eq('id', id)
+      .select('*')
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return mapOutcome(data as OutcomeRow);
+  }
+
   async remove(id: string): Promise<void> {
     const { error } = await this.supabase.from('outcomes').delete().eq('id', id);
 
