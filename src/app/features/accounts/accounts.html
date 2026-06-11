@@ -74,13 +74,7 @@
                 <i [class]="'pi ' + account.icon + ' text-xl'"></i>
               </div>
               <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-2">
-                  <h2 class="truncate font-medium">{{ account.name }}</h2>
-                  @if (account.isDefault) {
-                    <p-tag value="Default" severity="info" />
-                  }
-                </div>
-                <p class="mt-1 text-sm text-muted-color tabular-nums">ID {{ account.cardId }}</p>
+                <h2 class="truncate font-medium">{{ account.name }}</h2>
                 <p class="mt-1 text-lg font-semibold tabular-nums">
                   {{ formatBalance(account.balance, account.currency) }}
                 </p>
@@ -134,7 +128,6 @@
                     <h2 class="truncate font-medium">{{ account.name }}</h2>
                     <p-tag value="Archived" severity="secondary" />
                   </div>
-                  <p class="mt-1 text-sm text-muted-color tabular-nums">ID {{ account.cardId }}</p>
                   <p class="mt-1 text-lg font-semibold tabular-nums">
                     {{ formatBalance(account.balance, account.currency) }}
                   </p>

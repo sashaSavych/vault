@@ -9,97 +9,76 @@
     <p-button label="Sign out" icon="pi pi-sign-out" severity="secondary" (onClick)="auth.signOut()" />
   </header>
 
-  <section class="mx-auto mt-12 flex w-full max-w-3xl flex-col gap-3">
+  <section class="mx-auto mt-8 flex w-full max-w-3xl flex-col gap-2">
     <a
       routerLink="/accounts"
-      class="flex items-center gap-4 rounded-2xl border border-surface-200 bg-surface-0 p-6 no-underline transition-colors hover:border-primary/30 dark:border-surface-800 dark:bg-surface-900"
+      class="flex items-center gap-3 rounded-xl border border-surface-200 bg-surface-0 px-4 py-3 no-underline transition-colors hover:border-primary/30 dark:border-surface-800 dark:bg-surface-900"
     >
-      <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        <i class="pi pi-wallet text-xl"></i>
+      <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <i class="pi pi-wallet text-base"></i>
       </div>
-      <div class="flex-1">
-        <h2 class="font-medium text-color">Accounts</h2>
-        <p class="text-sm text-muted-color">Add, edit, and remove your wallets</p>
-      </div>
-      <i class="pi pi-chevron-right text-muted-color"></i>
+      <h2 class="min-w-0 flex-1 font-medium text-color">Accounts</h2>
+      <i class="pi pi-chevron-right shrink-0 text-sm text-muted-color"></i>
     </a>
     <a
       routerLink="/categories"
-      class="flex items-center gap-4 rounded-2xl border border-surface-200 bg-surface-0 p-6 no-underline transition-colors hover:border-primary/30 dark:border-surface-800 dark:bg-surface-900"
+      class="flex items-center gap-3 rounded-xl border border-surface-200 bg-surface-0 px-4 py-3 no-underline transition-colors hover:border-primary/30 dark:border-surface-800 dark:bg-surface-900"
     >
-      <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        <i class="pi pi-tags text-xl"></i>
+      <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <i class="pi pi-tags text-base"></i>
       </div>
-      <div class="flex-1">
-        <h2 class="font-medium text-color">Categories</h2>
-        <p class="text-sm text-muted-color">Income and outcome labels</p>
-      </div>
-      <i class="pi pi-chevron-right text-muted-color"></i>
+      <h2 class="min-w-0 flex-1 font-medium text-color">Categories</h2>
+      <i class="pi pi-chevron-right shrink-0 text-sm text-muted-color"></i>
     </a>
     <a
       routerLink="/incomes"
-      class="flex items-center gap-4 rounded-2xl border border-surface-200 bg-surface-0 p-6 no-underline transition-colors hover:border-primary/30 dark:border-surface-800 dark:bg-surface-900"
+      class="flex items-center gap-3 rounded-xl border border-surface-200 bg-surface-0 px-4 py-3 no-underline transition-colors hover:border-primary/30 dark:border-surface-800 dark:bg-surface-900"
     >
-      <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        <i class="pi pi-plus-circle text-xl"></i>
+      <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <i class="pi pi-plus-circle text-base"></i>
       </div>
-      <div class="flex-1">
-        <h2 class="font-medium text-color">Incomes</h2>
-        <p class="text-sm text-muted-color">Record income to accounts</p>
-      </div>
-      <i class="pi pi-chevron-right text-muted-color"></i>
+      <h2 class="min-w-0 flex-1 font-medium text-color">Incomes</h2>
+      <i class="pi pi-chevron-right shrink-0 text-sm text-muted-color"></i>
     </a>
     <a
       routerLink="/outcomes"
-      class="flex items-center gap-4 rounded-2xl border border-surface-200 bg-surface-0 p-6 no-underline transition-colors hover:border-primary/30 dark:border-surface-800 dark:bg-surface-900"
+      class="flex items-center gap-3 rounded-xl border border-surface-200 bg-surface-0 px-4 py-3 no-underline transition-colors hover:border-primary/30 dark:border-surface-800 dark:bg-surface-900"
     >
-      <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        <i class="pi pi-minus-circle text-xl"></i>
+      <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <i class="pi pi-minus-circle text-base"></i>
       </div>
-      <div class="flex-1">
-        <h2 class="font-medium text-color">Outcomes</h2>
-        <p class="text-sm text-muted-color">Record expenses from accounts</p>
-      </div>
-      <i class="pi pi-chevron-right text-muted-color"></i>
+      <h2 class="min-w-0 flex-1 font-medium text-color">Outcomes</h2>
+      <i class="pi pi-chevron-right shrink-0 text-sm text-muted-color"></i>
     </a>
     <a
       routerLink="/reports"
-      class="flex items-center gap-4 rounded-2xl border border-surface-200 bg-surface-0 p-6 no-underline transition-colors hover:border-primary/30 dark:border-surface-800 dark:bg-surface-900"
+      class="flex items-center gap-3 rounded-xl border border-surface-200 bg-surface-0 px-4 py-3 no-underline transition-colors hover:border-primary/30 dark:border-surface-800 dark:bg-surface-900"
     >
-      <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        <i class="pi pi-chart-bar text-xl"></i>
+      <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <i class="pi pi-chart-bar text-base"></i>
       </div>
-      <div class="flex-1">
-        <h2 class="font-medium text-color">Reports</h2>
-        <p class="text-sm text-muted-color">Summaries and breakdowns</p>
-      </div>
-      <i class="pi pi-chevron-right text-muted-color"></i>
+      <h2 class="min-w-0 flex-1 font-medium text-color">Reports</h2>
+      <i class="pi pi-chevron-right shrink-0 text-sm text-muted-color"></i>
     </a>
     <a
       routerLink="/debts"
-      class="flex items-center gap-4 rounded-2xl border border-surface-200 bg-surface-0 p-6 no-underline transition-colors hover:border-primary/30 dark:border-surface-800 dark:bg-surface-900"
+      class="flex items-center gap-3 rounded-xl border border-surface-200 bg-surface-0 px-4 py-3 no-underline transition-colors hover:border-primary/30 dark:border-surface-800 dark:bg-surface-900"
     >
-      <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        <i class="pi pi-book text-xl"></i>
+      <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <i class="pi pi-book text-base"></i>
       </div>
-      <div class="flex-1">
-        <h2 class="font-medium text-color">Debts</h2>
-        <p class="text-sm text-muted-color">Borrow, lend, repay, and increase</p>
-      </div>
-      <i class="pi pi-chevron-right text-muted-color"></i>
+      <h2 class="min-w-0 flex-1 font-medium text-color">Debts</h2>
+      <i class="pi pi-chevron-right shrink-0 text-sm text-muted-color"></i>
     </a>
     <a
       routerLink="/transfers"
-      class="flex items-center gap-4 rounded-2xl border border-surface-200 bg-surface-0 p-6 no-underline transition-colors hover:border-primary/30 dark:border-surface-800 dark:bg-surface-900"
+      class="flex items-center gap-3 rounded-xl border border-surface-200 bg-surface-0 px-4 py-3 no-underline transition-colors hover:border-primary/30 dark:border-surface-800 dark:bg-surface-900"
     >
-      <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        <i class="pi pi-arrow-right-arrow-left text-xl"></i>
+      <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <i class="pi pi-arrow-right-arrow-left text-base"></i>
       </div>
-      <div class="flex-1">
-        <h2 class="font-medium text-color">Transfers</h2>
-        <p class="text-sm text-muted-color">Move money between accounts</p>
-      </div>
-      <i class="pi pi-chevron-right text-muted-color"></i>
+      <h2 class="min-w-0 flex-1 font-medium text-color">Transfers</h2>
+      <i class="pi pi-chevron-right shrink-0 text-sm text-muted-color"></i>
     </a>
   </section>
 </main>
