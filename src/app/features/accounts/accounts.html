@@ -193,23 +193,6 @@
     </div>
 
     <div class="flex flex-col gap-1">
-      <label for="account-card-ids" class="text-sm font-medium">IDs</label>
-      <input
-        pInputText
-        id="account-card-ids"
-        formControlName="cardIds"
-        class="w-full tabular-nums"
-        autocomplete="off"
-        placeholder="8458, 1234"
-        [invalid]="showError('cardIds')"
-      />
-      <small class="text-muted-color">Comma-separated last 4 digits for statement import</small>
-      @if (showError('cardIds')) {
-        <small class="text-red-500">Enter one or more 4-digit IDs.</small>
-      }
-    </div>
-
-    <div class="flex flex-col gap-1">
       <label for="account-balance" class="text-sm font-medium">Balance</label>
       <p-inputnumber
         inputId="account-balance"
@@ -270,6 +253,22 @@
           </div>
         </ng-template>
       </p-select>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="account-card-ids" class="text-sm font-medium">IDs</label>
+      <input
+        pInputText
+        id="account-card-ids"
+        formControlName="cardIds"
+        class="w-full tabular-nums"
+        autocomplete="off"
+        placeholder="8458, 1234"
+        [invalid]="showError('cardIds')"
+      />
+      @if (showError('cardIds')) {
+        <small class="text-red-500">Enter one or more 4-digit IDs.</small>
+      }
     </div>
 
     <div class="flex items-center justify-between gap-4">
