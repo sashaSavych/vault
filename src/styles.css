@@ -6,6 +6,6 @@ body:has(app-nav) main {
   padding-bottom: calc(6.5rem + env(safe-area-inset-bottom, 0));
 }
 
-body:has(app-nav) [id] {
+body:has(app-nav) main [id] {
   scroll-margin-bottom: calc(6.5rem + env(safe-area-inset-bottom, 0));
 }
