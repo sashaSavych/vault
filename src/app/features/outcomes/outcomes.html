@@ -230,6 +230,7 @@
 <p-dialog
   [header]="dialogTitle()"
   [modal]="true"
+  [dismissableMask]="true"
   [visible]="dialogVisible()"
   (visibleChange)="dialogVisible.set($event)"
   [style]="{ width: '100%', maxWidth: '28rem' }"
@@ -335,4 +336,4 @@
   </form>
 </p-dialog>
 
-<p-confirmDialog />
+<p-confirmDialog [dismissableMask]="true" />

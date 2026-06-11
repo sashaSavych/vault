@@ -153,6 +153,7 @@
 <p-dialog
   [header]="dialogTitle()"
   [modal]="true"
+  [dismissableMask]="true"
   [visible]="dialogVisible()"
   (visibleChange)="dialogVisible.set($event)"
   [style]="{ width: '100%', maxWidth: '28rem' }"
@@ -283,6 +284,7 @@
 <p-dialog
   [header]="deleteDialogTitle()"
   [modal]="true"
+  [dismissableMask]="true"
   [visible]="deleteDialogVisible()"
   (visibleChange)="deleteDialogVisible.set($event)"
   [style]="{ width: '100%', maxWidth: '28rem' }"

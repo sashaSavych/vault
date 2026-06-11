@@ -211,6 +211,7 @@
 <p-dialog
   header="Create debt"
   [modal]="true"
+  [dismissableMask]="true"
   [visible]="debtDialogVisible()"
   (visibleChange)="debtDialogVisible.set($event)"
   [style]="{ width: '100%', maxWidth: '28rem' }"
@@ -328,6 +329,7 @@
 <p-dialog
   [header]="operationDialogTitle()"
   [modal]="true"
+  [dismissableMask]="true"
   [visible]="operationDialogVisible()"
   (visibleChange)="operationDialogVisible.set($event)"
   [style]="{ width: '100%', maxWidth: '28rem' }"
@@ -431,4 +433,4 @@
   </form>
 </p-dialog>
 
-<p-confirmDialog />
+<p-confirmDialog [dismissableMask]="true" />
