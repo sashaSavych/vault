@@ -1,3 +1,21 @@
 :host {
   display: block;
 }
+
+.account-list.cdk-drop-list-dragging .account-list-item:not(.cdk-drag-placeholder) {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.account-list-item.cdk-drag-preview {
+  box-sizing: border-box;
+  border-radius: 1rem;
+  box-shadow: 0 12px 24px rgb(0 0 0 / 12%);
+}
+
+.account-list-item.cdk-drag-placeholder {
+  opacity: 0.35;
+}
+
+.account-list-item.cdk-drag-animating {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}

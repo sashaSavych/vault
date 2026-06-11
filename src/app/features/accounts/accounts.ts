@@ -1,3 +1,4 @@
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -13,7 +14,10 @@ import { ToggleSwitch } from 'primeng/toggleswitch';
 import { AccountsService } from '../../core/accounts/accounts.service';
 import { AuthService } from '../../core/auth/auth.service';
 import type { Account } from '../../core/models/account';
-import { ACCOUNT_ICONS } from '../../shared/constants/account-icons';
+import {
+  ACCOUNT_TYPES,
+  accountTypeClasses,
+} from '../../shared/constants/account-types';
 import { CURRENCIES } from '../../shared/constants/currencies';
 import { formatBalance } from '../../shared/utils/format-balance';
 import { toErrorMessage } from '../../shared/utils/to-error-message';
@@ -24,6 +28,7 @@ const DEFAULT_CARD_ID = '0000';
   selector: 'app-accounts',
   imports: [
     RouterLink,
+    DragDropModule,
     ReactiveFormsModule,
     Button,
     Dialog,
@@ -43,12 +48,14 @@ export class Accounts implements OnInit {
 
   protected readonly auth = inject(AuthService);
   protected readonly currencies = [...CURRENCIES];
-  protected readonly icons = [...ACCOUNT_ICONS];
+  protected readonly types = [...ACCOUNT_TYPES];
+  protected readonly accountTypeClasses = accountTypeClasses;
 
   protected readonly activeAccounts = signal<Account[]>([]);
   protected readonly archivedAccounts = signal<Account[]>([]);
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
+  protected readonly reordering = signal(false);
   protected readonly deleting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly dialogErrorMessage = signal<string | null>(null);
@@ -220,6 +227,28 @@ export class Accounts implements OnInit {
       await this.reload();
     } catch (error) {
       this.errorMessage.set(toErrorMessage(error));
+    }
+  }
+
+  protected async dropAccount(event: CdkDragDrop<Account[]>): Promise<void> {
+    if (event.previousIndex === event.currentIndex || this.reordering()) {
+      return;
+    }
+
+    const accounts = [...this.activeAccounts()];
+    moveItemInArray(accounts, event.previousIndex, event.currentIndex);
+    this.activeAccounts.set(accounts);
+
+    this.reordering.set(true);
+    this.errorMessage.set(null);
+
+    try {
+      await this.accountsService.reorder(accounts.map((account) => account.id));
+    } catch (error) {
+      this.errorMessage.set(toErrorMessage(error));
+      await this.reload();
+    } finally {
+      this.reordering.set(false);
     }
   }
 

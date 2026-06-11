@@ -14,7 +14,7 @@ export class AccountsService {
     let query = this.supabase
       .from('accounts')
       .select('*')
-      .order('is_default', { ascending: false })
+      .order('sort_order', { ascending: true })
       .order('created_at', { ascending: true });
 
     if (!options.includeArchived) {
@@ -33,7 +33,11 @@ export class AccountsService {
   async create(input: AccountInput): Promise<Account> {
     const { data, error } = await this.supabase
       .from('accounts')
-      .insert({ ...this.toPayload(input), user_id: this.requireUserId() })
+      .insert({
+        ...this.toPayload(input),
+        user_id: this.requireUserId(),
+        sort_order: await this.nextSortOrder(),
+      })
       .select('*')
       .single();
 
@@ -57,6 +61,25 @@ export class AccountsService {
     }
 
     return mapAccount(data as AccountRow);
+  }
+
+  async reorder(accountIds: string[]): Promise<void> {
+    const userId = this.requireUserId();
+
+    const results = await Promise.all(
+      accountIds.map((id, index) =>
+        this.supabase
+          .from('accounts')
+          .update({ sort_order: index })
+          .eq('id', id)
+          .eq('user_id', userId),
+      ),
+    );
+
+    const error = results.find((result) => result.error)?.error;
+    if (error) {
+      throw error;
+    }
   }
 
   async archive(id: string): Promise<void> {
@@ -92,6 +115,23 @@ export class AccountsService {
     if (error) {
       throw error;
     }
+  }
+
+  private async nextSortOrder(): Promise<number> {
+    const userId = this.requireUserId();
+    const { data, error } = await this.supabase
+      .from('accounts')
+      .select('sort_order')
+      .eq('user_id', userId)
+      .order('sort_order', { ascending: false })
+      .limit(1);
+
+    if (error) {
+      throw error;
+    }
+
+    const current = (data as { sort_order: number }[] | null)?.[0]?.sort_order;
+    return current == null ? 0 : current + 1;
   }
 
   private toPayload(input: AccountInput) {
