@@ -33,6 +33,7 @@ import { formatBalance } from '../../shared/utils/format-balance';
 import { toErrorMessage } from '../../shared/utils/to-error-message';
 
 const DEFAULT_CARD_IDS = '0000';
+const SUMMARY_CURRENCIES = ['UAH', 'USD', 'EUR'] as const;
 
 function cardIdsValidator(control: AbstractControl): ValidationErrors | null {
   const cardIds = parseCardIdsInput(String(control.value ?? ''));
@@ -106,6 +107,23 @@ export class Accounts implements OnInit {
   });
 
   protected readonly formatBalance = formatBalance;
+
+  protected readonly balanceByCurrency = computed(() => {
+    const totals = new Map<string, number>(
+      SUMMARY_CURRENCIES.map((currency) => [currency, 0]),
+    );
+
+    for (const account of this.activeAccounts()) {
+      if (totals.has(account.currency)) {
+        totals.set(account.currency, (totals.get(account.currency) ?? 0) + account.balance);
+      }
+    }
+
+    return SUMMARY_CURRENCIES.map((currency) => ({
+      currency,
+      total: totals.get(currency) ?? 0,
+    }));
+  });
 
   ngOnInit(): void {
     void this.reload();
