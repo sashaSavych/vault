@@ -1,14 +1,4 @@
 <nav class="app-nav" aria-label="App navigation">
-  @if (currentPage()?.sections; as sections) {
-    <div class="app-nav__sections">
-      @for (section of sections; track section.id) {
-        <button type="button" class="app-nav__section" (click)="scrollToSection(section.id)">
-          {{ section.label }}
-        </button>
-      }
-    </div>
-  }
-
   <div class="app-nav__pages">
     @for (page of pages; track page.path) {
       <a

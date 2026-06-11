@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
 import { Button } from 'primeng/button';
@@ -37,7 +37,6 @@ import { toErrorMessage } from '../../shared/utils/to-error-message';
   selector: 'app-debts',
   imports: [
     RouterLink,
-    FormsModule,
     ReactiveFormsModule,
     Button,
     Dialog,
@@ -80,11 +79,6 @@ export class Debts implements OnInit {
   protected readonly operationType = signal<DebtOperationType>('repay');
   protected readonly expandedDebtIds = signal<Set<string>>(new Set());
 
-  protected readonly filterAccountId = signal<string | null>(null);
-  protected readonly filterType = signal<DebtType | null>(null);
-  protected readonly filterDateFrom = signal<Date | null>(null);
-  protected readonly filterDateTo = signal<Date | null>(null);
-
   protected readonly operationDialogTitle = computed(() => {
     const debt = this.operationDebt();
     if (!debt) {
@@ -92,19 +86,6 @@ export class Debts implements OnInit {
     }
     return `${debtOperationTypeLabel(this.operationType())} — ${debt.name}`;
   });
-
-  protected readonly accountOptions = computed(() => [
-    { label: 'All accounts', value: null as string | null },
-    ...this.accounts().map((account) => ({
-      label: `${account.name} (${account.currency})`,
-      value: account.id,
-    })),
-  ]);
-
-  protected readonly filterTypeOptions = computed(() => [
-    { label: 'All types', value: null as DebtType | null },
-    ...DEBT_TYPE_OPTIONS,
-  ]);
 
   protected readonly formAccountOptions = computed(() =>
     this.accounts().map((account) => ({
@@ -198,18 +179,6 @@ export class Debts implements OnInit {
     this.operationDialogVisible.set(false);
     this.operationDebt.set(null);
     this.dialogErrorMessage.set(null);
-  }
-
-  protected async applyFilters(): Promise<void> {
-    await this.reloadDebts();
-  }
-
-  protected async clearFilters(): Promise<void> {
-    this.filterAccountId.set(null);
-    this.filterType.set(null);
-    this.filterDateFrom.set(null);
-    this.filterDateTo.set(null);
-    await this.reloadDebts();
   }
 
   protected async saveDebt(): Promise<void> {
@@ -377,16 +346,6 @@ export class Debts implements OnInit {
   }
 
   private async reloadDebts(): Promise<void> {
-    const dateFrom = this.filterDateFrom();
-    const dateTo = this.filterDateTo();
-
-    this.debts.set(
-      await this.debtsService.list({
-        accountId: this.filterAccountId() ?? undefined,
-        type: this.filterType() ?? undefined,
-        dateFrom: dateFrom ? toIsoDateString(dateFrom) : undefined,
-        dateTo: dateTo ? toIsoDateString(dateTo) : undefined,
-      }),
-    );
+    this.debts.set(await this.debtsService.list());
   }
 }
