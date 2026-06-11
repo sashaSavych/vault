@@ -1,4 +1,7 @@
+import type { Category } from '../../core/models/category';
 import type { IncomeWithDetails } from '../../core/models/income';
+
+import { categorySortIndex } from './category-tree';
 
 export interface IncomeCategoryCurrencyTotal {
   currency: string;
@@ -21,6 +24,7 @@ export interface IncomeReportCurrencyTotal {
 
 export function aggregateIncomesByCategory(
   incomes: IncomeWithDetails[],
+  categories: Category[] = [],
 ): IncomeCategoryReportRow[] {
   const byCategory = new Map<string, IncomeCategoryReportRow>();
 
@@ -51,9 +55,20 @@ export function aggregateIncomesByCategory(
     }
   }
 
-  return [...byCategory.values()].sort((a, b) =>
-    a.categoryName.localeCompare(b.categoryName, undefined, { sensitivity: 'base' }),
-  );
+  const rows = [...byCategory.values()];
+
+  if (categories.length === 0) {
+    return rows.sort((a, b) =>
+      a.categoryName.localeCompare(b.categoryName, undefined, { sensitivity: 'base' }),
+    );
+  }
+
+  const order = categorySortIndex(categories, 'income');
+  return rows.sort((a, b) => {
+    const left = order.get(a.categoryId) ?? Number.MAX_SAFE_INTEGER;
+    const right = order.get(b.categoryId) ?? Number.MAX_SAFE_INTEGER;
+    return left - right || a.categoryName.localeCompare(b.categoryName, undefined, { sensitivity: 'base' });
+  });
 }
 
 export function sumIncomesByCurrency(incomes: IncomeWithDetails[]): IncomeReportCurrencyTotal[] {

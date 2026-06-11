@@ -1,5 +1,7 @@
 import type { Category } from '../../core/models/category';
 
+import { orderedCategories } from './category-tree';
+
 export function categoryLabel(categories: Category[], categoryId: string): string {
   const category = categories.find((c) => c.id === categoryId);
   if (!category) {
@@ -14,13 +16,18 @@ export function categoryLabel(categories: Category[], categoryId: string): strin
 }
 
 export function categorySelectOptions(categories: Category[]): { label: string; value: string }[] {
-  const byId = new Map(categories.map((c) => [c.id, c]));
+  if (categories.length === 0) {
+    return [];
+  }
 
-  return categories.map((c) => {
-    const parent = c.parentId ? byId.get(c.parentId) : undefined;
+  const byId = new Map(categories.map((c) => [c.id, c]));
+  const type = categories[0].type;
+
+  return orderedCategories(categories, type).map((category) => {
+    const parent = category.parentId ? byId.get(category.parentId) : undefined;
     return {
-      label: parent ? `${parent.name} / ${c.name}` : c.name,
-      value: c.id,
+      label: parent ? `${parent.name} / ${category.name}` : category.name,
+      value: category.id,
     };
   });
 }

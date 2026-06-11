@@ -18,3 +18,18 @@ export function buildCategoryTree(categories: Category[], type: CategoryType): C
       .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)),
   }));
 }
+
+export function orderedCategories(categories: Category[], type: CategoryType): Category[] {
+  return buildCategoryTree(categories, type).flatMap((node) => [node.category, ...node.children]);
+}
+
+export function categorySortIndex(
+  categories: Category[],
+  type: CategoryType,
+): Map<string, number> {
+  const order = new Map<string, number>();
+  orderedCategories(categories, type).forEach((category, index) => {
+    order.set(category.id, index);
+  });
+  return order;
+}

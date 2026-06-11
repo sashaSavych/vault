@@ -1,3 +1,4 @@
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ConfirmationService } from 'primeng/api';
@@ -7,14 +8,12 @@ import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { Message } from 'primeng/message';
 import { Select } from 'primeng/select';
-import { Tag } from 'primeng/tag';
-
 import { CategoriesService } from '../../core/categories/categories.service';
 import { AuthService } from '../../core/auth/auth.service';
 import type { Category, CategoryType } from '../../core/models/category';
 import { CATEGORY_ICONS } from '../../shared/constants/category-icons';
 import { CATEGORY_TYPES } from '../../shared/constants/category-types';
-import { buildCategoryTree } from '../../shared/utils/category-tree';
+import { buildCategoryTree, type CategoryNode } from '../../shared/utils/category-tree';
 import { toErrorMessage } from '../../shared/utils/to-error-message';
 
 const NO_PARENT = '';
@@ -22,6 +21,7 @@ const NO_PARENT = '';
 @Component({
   selector: 'app-categories',
   imports: [
+    DragDropModule,
     ReactiveFormsModule,
     Button,
     Dialog,
@@ -29,7 +29,6 @@ const NO_PARENT = '';
     Select,
     ConfirmDialog,
     Message,
-    Tag,
   ],
   templateUrl: './categories.html',
   styleUrl: './categories.scss',
@@ -46,9 +45,18 @@ export class Categories implements OnInit {
   protected readonly categories = signal<Category[]>([]);
   protected readonly incomeTree = computed(() => buildCategoryTree(this.categories(), 'income'));
   protected readonly outcomeTree = computed(() => buildCategoryTree(this.categories(), 'outcome'));
+  protected readonly incomeCount = computed(
+    () => this.categories().filter((category) => category.type === 'income').length,
+  );
+  protected readonly outcomeCount = computed(
+    () => this.categories().filter((category) => category.type === 'outcome').length,
+  );
 
+  protected readonly incomeExpanded = signal(false);
+  protected readonly outcomeExpanded = signal(false);
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
+  protected readonly reordering = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly dialogErrorMessage = signal<string | null>(null);
   protected readonly dialogVisible = signal(false);
@@ -66,6 +74,14 @@ export class Categories implements OnInit {
     void this.reload();
   }
 
+  protected toggleIncomeSection(): void {
+    this.incomeExpanded.update((expanded) => !expanded);
+  }
+
+  protected toggleOutcomeSection(): void {
+    this.outcomeExpanded.update((expanded) => !expanded);
+  }
+
   protected parentOptions(): { label: string; value: string }[] {
     const type = this.form.getRawValue().type;
     const editingId = this.editingId();
@@ -74,13 +90,13 @@ export class Categories implements OnInit {
       return [{ label: 'None (top level)', value: NO_PARENT }];
     }
 
-    const roots = this.categories().filter(
-      (c) => c.type === type && !c.parentId && c.id !== editingId,
-    );
+    const roots = buildCategoryTree(this.categories(), type)
+      .map((node) => node.category)
+      .filter((category) => category.id !== editingId);
 
     return [
       { label: 'None (top level)', value: NO_PARENT },
-      ...roots.map((c) => ({ label: c.name, value: c.id })),
+      ...roots.map((category) => ({ label: category.name, value: category.id })),
     ];
   }
 
@@ -184,6 +200,56 @@ export class Categories implements OnInit {
     }
   }
 
+  protected async dropRootCategory(
+    event: CdkDragDrop<CategoryNode[]>,
+    type: CategoryType,
+  ): Promise<void> {
+    if (event.previousIndex === event.currentIndex || this.reordering()) {
+      return;
+    }
+
+    const tree = [...(type === 'income' ? this.incomeTree() : this.outcomeTree())];
+    moveItemInArray(tree, event.previousIndex, event.currentIndex);
+    this.applySiblingOrder(tree.map((node) => node.category));
+
+    this.reordering.set(true);
+    this.errorMessage.set(null);
+
+    try {
+      await this.categoriesService.reorder(tree.map((node) => node.category.id));
+    } catch (error) {
+      this.errorMessage.set(toCategoryErrorMessage(error));
+      await this.reload();
+    } finally {
+      this.reordering.set(false);
+    }
+  }
+
+  protected async dropChildCategory(
+    event: CdkDragDrop<Category[]>,
+    parentId: string,
+  ): Promise<void> {
+    if (event.previousIndex === event.currentIndex || this.reordering()) {
+      return;
+    }
+
+    const children = [...event.container.data];
+    moveItemInArray(children, event.previousIndex, event.currentIndex);
+    this.applySiblingOrder(children);
+
+    this.reordering.set(true);
+    this.errorMessage.set(null);
+
+    try {
+      await this.categoriesService.reorder(children.map((child) => child.id));
+    } catch (error) {
+      this.errorMessage.set(toCategoryErrorMessage(error));
+      await this.reload();
+    } finally {
+      this.reordering.set(false);
+    }
+  }
+
   protected confirmDelete(category: Category, event: Event): void {
     const hasChildren = this.categories().some((c) => c.parentId === category.id);
     const detail = hasChildren ? ' Its subcategories will also be deleted.' : '';
@@ -234,6 +300,19 @@ export class Categories implements OnInit {
     } catch (error) {
       this.errorMessage.set(toCategoryErrorMessage(error));
     }
+  }
+
+  private applySiblingOrder(siblings: Category[]): void {
+    const categories = [...this.categories()];
+
+    siblings.forEach((sibling, index) => {
+      const position = categories.findIndex((category) => category.id === sibling.id);
+      if (position >= 0) {
+        categories[position] = { ...categories[position], sortOrder: index };
+      }
+    });
+
+    this.categories.set(categories);
   }
 
   private async reload(): Promise<void> {

@@ -313,7 +313,7 @@ export class OutcomesByCategoryReport implements OnInit {
       const outcomes = await this.outcomesService.list(this.reportFilters());
 
       this.outcomeCount.set(outcomes.length);
-      this.rows.set(aggregateOutcomesByCategory(outcomes));
+      this.rows.set(aggregateOutcomesByCategory(outcomes, this.categories()));
       this.grandTotals.set(sumOutcomesByCurrency(outcomes));
     } catch (error) {
       this.errorMessage.set(toErrorMessage(error));

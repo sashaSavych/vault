@@ -96,6 +96,25 @@ export class CategoriesService {
     }
   }
 
+  async reorder(categoryIds: string[]): Promise<void> {
+    const userId = this.requireUserId();
+
+    const results = await Promise.all(
+      categoryIds.map((id, index) =>
+        this.supabase
+          .from('categories')
+          .update({ sort_order: index })
+          .eq('id', id)
+          .eq('user_id', userId),
+      ),
+    );
+
+    const error = results.find((result) => result.error)?.error;
+    if (error) {
+      throw error;
+    }
+  }
+
   nextSortOrder(categories: Category[], type: CategoryType, parentId: string | null): number {
     const siblings = categories.filter((c) => c.type === type && c.parentId === parentId);
     if (siblings.length === 0) {

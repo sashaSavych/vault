@@ -280,7 +280,7 @@ export class IncomesByCategoryReport implements OnInit {
       const incomes = await this.incomesService.list(this.reportFilters());
 
       this.incomeCount.set(incomes.length);
-      this.rows.set(aggregateIncomesByCategory(incomes));
+      this.rows.set(aggregateIncomesByCategory(incomes, this.categories()));
       this.grandTotals.set(sumIncomesByCurrency(incomes));
     } catch (error) {
       this.errorMessage.set(toErrorMessage(error));
