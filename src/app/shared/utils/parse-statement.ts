@@ -28,6 +28,7 @@ export interface OutcomeImportItem extends OutcomeInput {
   accountCardId?: string;
   accountName?: string;
   accountFallback?: boolean;
+  categoryMatchedBy?: 'bank' | 'name';
   categoryName?: string;
   error?: string;
 }
@@ -43,11 +44,11 @@ export function parseStatementRows(text: string): StatementRow[] {
 
 export function parseStatementGrid(grid: unknown[][]): StatementRow[] {
   const headerIdx = grid.findIndex((row) => {
-    const headers = row.map(cellText);
+    const headers = row.map(normalizeHeader);
     return (
-      headers.includes(COL_CATEGORY) &&
-      headers.includes(COL_CARD_AMOUNT) &&
-      headers.includes(COL_NAME)
+      findColumnIndex(headers, COL_CATEGORY) >= 0 &&
+      findColumnIndex(headers, COL_CARD_AMOUNT) >= 0 &&
+      findColumnIndex(headers, COL_NAME) >= 0
     );
   });
 
@@ -55,13 +56,13 @@ export function parseStatementGrid(grid: unknown[][]): StatementRow[] {
     throw new Error(`Statement header not found (expected "${COL_CATEGORY}").`);
   }
 
-  const headers = grid[headerIdx].map(cellText);
-  const dateIdx = headers.indexOf(COL_DATE);
-  const categoryIdx = headers.indexOf(COL_CATEGORY);
-  const cardIdx = headers.indexOf(COL_CARD);
-  const nameIdx = headers.indexOf(COL_NAME);
-  const cardAmountIdx = headers.indexOf(COL_CARD_AMOUNT);
-  const txAmountIdx = headers.indexOf(COL_TX_AMOUNT);
+  const headers = grid[headerIdx].map(normalizeHeader);
+  const dateIdx = findColumnIndex(headers, COL_DATE);
+  const categoryIdx = findColumnIndex(headers, COL_CATEGORY);
+  const cardIdx = findColumnIndex(headers, COL_CARD);
+  const nameIdx = findColumnIndex(headers, COL_NAME);
+  const cardAmountIdx = findColumnIndex(headers, COL_CARD_AMOUNT);
+  const txAmountIdx = findColumnIndex(headers, COL_TX_AMOUNT);
 
   if (
     dateIdx < 0 ||
@@ -80,7 +81,8 @@ export function parseStatementGrid(grid: unknown[][]): StatementRow[] {
     const cells = grid[i] ?? [];
     const cardAmount = parseAmount(cells[cardAmountIdx]);
 
-    if (cardAmount === null || cardAmount >= 0) {
+    // Debits only: positive or zero "Сума в валюті картки" = credit / transfer in — skip.
+    if (!isDebitCardAmount(cardAmount)) {
       continue;
     }
 
@@ -161,11 +163,26 @@ export function parseStatementDate(raw: string): string | null {
   return `${year}-${month}-${day}`;
 }
 
+export function findOutcomeOtherCategory(categories: Category[]): Category | undefined {
+  return (
+    categories.find(
+      (category) =>
+        category.type === 'outcome' &&
+        category.name.trim().toLowerCase() === 'other' &&
+        !category.parentId,
+    ) ??
+    categories.find(
+      (category) => category.type === 'outcome' && category.name.trim().toLowerCase() === 'other',
+    )
+  );
+}
+
 export function buildOutcomeImports(
   rows: StatementRow[],
   accounts: Account[],
   categories: Category[],
   categoryMapping: Record<string, string>,
+  storedMappings: Record<string, string> = {},
 ): OutcomeImportItem[] {
   const undefinedAccount = findUndefinedAccount(accounts);
 
@@ -173,7 +190,13 @@ export function buildOutcomeImports(
     const { account: matchedAccount, cardLast4 } = findAccountByCardLast4(row.card, accounts);
     const accountFallback = !matchedAccount && undefinedAccount !== undefined;
     const account = matchedAccount ?? undefinedAccount;
-    const categoryId = categoryMapping[row.bankCategory] ?? '';
+    const { categoryId, matchedBy } = resolveImportCategoryId(
+      row.bankCategory,
+      row.name,
+      categoryMapping,
+      storedMappings,
+      categories,
+    );
     const date = parseStatementDate(row.dateRaw);
     const errors: string[] = [];
 
@@ -205,10 +228,99 @@ export function buildOutcomeImports(
       accountCardId: matchedAccount ? cardLast4 ?? undefined : undefined,
       accountName: account?.name,
       accountFallback: accountFallback || undefined,
+      categoryMatchedBy: matchedBy ?? undefined,
       categoryName: categoryId ? categoryLabel(categories, categoryId) : undefined,
       error: errors.length > 0 ? errors.join('; ') : undefined,
     };
   });
+}
+
+function resolveImportCategoryId(
+  bankCategory: string,
+  itemName: string,
+  bankCategoryMapping: Record<string, string>,
+  storedMappings: Record<string, string>,
+  categories: Category[],
+): { categoryId: string; matchedBy: 'bank' | 'name' | null } {
+  const fromBank = bankCategoryMapping[bankCategory] ?? '';
+  if (!fromBank) {
+    return { categoryId: '', matchedBy: null };
+  }
+
+  const other = findOutcomeOtherCategory(categories);
+  if (!other || fromBank !== other.id) {
+    return { categoryId: fromBank, matchedBy: 'bank' };
+  }
+
+  const fromName = matchCategoryByItemName(itemName, categories, storedMappings);
+  if (fromName) {
+    return { categoryId: fromName, matchedBy: 'name' };
+  }
+
+  return { categoryId: fromBank, matchedBy: 'bank' };
+}
+
+function matchCategoryByItemName(
+  itemName: string,
+  categories: Category[],
+  storedMappings: Record<string, string>,
+): string | null {
+  const normalizedName = normalizeMappingKey(itemName);
+  if (!normalizedName) {
+    return null;
+  }
+
+  const other = findOutcomeOtherCategory(categories);
+  const fromStored = storedMappings[normalizedName];
+  if (fromStored && fromStored !== other?.id) {
+    return fromStored;
+  }
+
+  const outcomeCategories = categories.filter(
+    (category) => category.type === 'outcome' && category.id !== other?.id,
+  );
+
+  const exact = outcomeCategories.find(
+    (category) => normalizeMappingKey(category.name) === normalizedName,
+  );
+  if (exact) {
+    return exact.id;
+  }
+
+  const candidates: { categoryId: string; label: string }[] = [];
+  for (const category of outcomeCategories) {
+    for (const label of categoryMatchLabels(category, categories)) {
+      if (label.length >= 3) {
+        candidates.push({ categoryId: category.id, label });
+      }
+    }
+  }
+  candidates.sort((left, right) => right.label.length - left.label.length);
+
+  for (const candidate of candidates) {
+    if (normalizedName.includes(candidate.label)) {
+      return candidate.categoryId;
+    }
+  }
+
+  return null;
+}
+
+function categoryMatchLabels(category: Category, categories: Category[]): string[] {
+  const name = normalizeMappingKey(category.name);
+  const parent = category.parentId
+    ? categories.find((item) => item.id === category.parentId)
+    : undefined;
+
+  if (parent) {
+    return [name, normalizeMappingKey(`${parent.name} / ${category.name}`)];
+  }
+
+  return [name];
+}
+
+function normalizeMappingKey(value: string): string {
+  return value.trim().toLowerCase();
 }
 
 export function isImportSavable(item: OutcomeImportItem): boolean {
@@ -235,15 +347,27 @@ export function fallbackCategoryMapping(
   bankCategories: string[],
   categories: Category[],
 ): Record<string, string> {
-  const other =
-    categories.find((category) => category.name.toLowerCase() === 'other' && !category.parentId) ??
-    categories.find((category) => category.name.toLowerCase() === 'other');
+  const other = findOutcomeOtherCategory(categories);
 
   if (!other) {
     return {};
   }
 
   return Object.fromEntries(bankCategories.map((bankCategory) => [bankCategory, other.id]));
+}
+
+/** True when card currency amount is a debit (money leaving the card). */
+export function isDebitCardAmount(amount: number | null): amount is number {
+  return amount !== null && amount < 0;
+}
+
+function normalizeHeader(value: unknown): string {
+  return cellText(value).replace(/\s+/g, ' ');
+}
+
+function findColumnIndex(headers: string[], columnName: string): number {
+  const target = normalizeHeader(columnName);
+  return headers.findIndex((header) => header === target);
 }
 
 function cellText(value: unknown): string {
@@ -272,7 +396,18 @@ function parseAmount(value: unknown): number | null {
     return Number.isFinite(value) ? value : null;
   }
 
-  const normalized = String(value).trim().replace(/\s/g, '').replace(',', '.');
-  const amount = Number(normalized);
+  let text = String(value)
+    .trim()
+    .replace(/\u00a0/g, ' ')
+    .replace(/\u2212/g, '-')
+    .replace(/\s/g, '');
+
+  const accountingNegative = text.match(/^\((.+)\)$/);
+  if (accountingNegative) {
+    text = `-${accountingNegative[1]}`;
+  }
+
+  text = text.replace(',', '.');
+  const amount = Number(text);
   return Number.isFinite(amount) ? amount : null;
 }

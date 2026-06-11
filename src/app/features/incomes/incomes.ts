@@ -23,7 +23,10 @@ import {
   accountFilterOptions,
   accountSelectOptions,
 } from '../../shared/utils/account-select-options';
-import { categorySelectOptions } from '../../shared/utils/category-select-options';
+import {
+  categoryFilterOptions,
+  categorySelectOptions,
+} from '../../shared/utils/category-select-options';
 import { formatBalance } from '../../shared/utils/format-balance';
 import { formatDate, parseIsoDate, toIsoDateString } from '../../shared/utils/format-date';
 import { toErrorMessage } from '../../shared/utils/to-error-message';
@@ -74,6 +77,7 @@ export class Incomes implements OnInit {
 
   protected readonly filtersExpanded = signal(false);
   protected readonly filterAccountId = signal<string | null>(null);
+  protected readonly filterCategoryId = signal<string | null>(null);
   protected readonly filterDateFrom = signal<Date | null>(null);
   protected readonly filterDateTo = signal<Date | null>(null);
 
@@ -86,6 +90,10 @@ export class Incomes implements OnInit {
   });
 
   protected readonly accountOptions = computed(() => accountFilterOptions(this.accounts()));
+
+  protected readonly categoryFilterSelectOptions = computed(() =>
+    categoryFilterOptions(this.categories()),
+  );
 
   protected readonly categoryOptions = computed(() =>
     categorySelectOptions(this.categories()),
@@ -163,6 +171,7 @@ export class Incomes implements OnInit {
 
   protected async clearFilters(): Promise<void> {
     this.filterAccountId.set(null);
+    this.filterCategoryId.set(null);
     this.filterDateFrom.set(null);
     this.filterDateTo.set(null);
     await this.reloadIncomes();
@@ -260,6 +269,7 @@ export class Incomes implements OnInit {
     this.incomes.set(
       await this.incomesService.list({
         accountId: this.filterAccountId() ?? undefined,
+        categoryId: this.filterCategoryId() ?? undefined,
         dateFrom: dateFrom ? toIsoDateString(dateFrom) : undefined,
         dateTo: dateTo ? toIsoDateString(dateTo) : undefined,
       }),

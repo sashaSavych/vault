@@ -95,6 +95,20 @@
               </ng-template>
             </p-select>
           </div>
+          <div class="flex flex-col gap-1 sm:col-span-2">
+            <label for="filter-category" class="text-sm text-muted-color">Category</label>
+            <p-select
+              inputId="filter-category"
+              [options]="categoryFilterSelectOptions()"
+              optionLabel="label"
+              optionValue="value"
+              [ngModel]="filterCategoryId()"
+              (ngModelChange)="filterCategoryId.set($event)"
+              appendTo="body"
+              styleClass="w-full"
+              placeholder="All categories"
+            />
+          </div>
           <div class="flex flex-col gap-1">
             <label for="filter-from" class="text-sm text-muted-color">From date</label>
             <p-datepicker

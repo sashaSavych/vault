@@ -26,6 +26,7 @@ Flow:
    - If missing, try exact match to a Vault outcome category name.
    - If still missing, call Gemini and save new row to `category_mappings`.
 3. Unmapped values fall back to "Other" when it exists.
+4. Rows still mapped to **Other** after bank-category analysis are re-matched using **Опис операції** (item name): saved `category_mappings`, exact category name, then substring match.
 
 Database: run `supabase/migrations/category-mapping.sql` (when using edge-function matching).
 

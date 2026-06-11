@@ -15,6 +15,15 @@ export function categoryLabel(categories: Category[], categoryId: string): strin
   return parent ? `${parent.name} / ${category.name}` : category.name;
 }
 
+export interface CategoryFilterOption {
+  label: string;
+  value: string | null;
+}
+
+export function categoryFilterOptions(categories: Category[]): CategoryFilterOption[] {
+  return [{ label: 'All categories', value: null }, ...categorySelectOptions(categories)];
+}
+
 export function categorySelectOptions(categories: Category[]): { label: string; value: string }[] {
   if (categories.length === 0) {
     return [];

@@ -14,6 +14,7 @@ import { Select } from 'primeng/select';
 import { environment } from '../../../environments/environment';
 import { AccountsService } from '../../core/accounts/accounts.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { CategoryMappingsService } from '../../core/categories/category-mappings.service';
 import { CategoryMatchService } from '../../core/categories/category-match.service';
 import { CategoriesService } from '../../core/categories/categories.service';
 import type { Account } from '../../core/models/account';
@@ -35,7 +36,10 @@ import {
   accountFilterOptions,
   accountSelectOptions,
 } from '../../shared/utils/account-select-options';
-import { categorySelectOptions } from '../../shared/utils/category-select-options';
+import {
+  categoryFilterOptions,
+  categorySelectOptions,
+} from '../../shared/utils/category-select-options';
 import {
   insufficientBalanceWarning,
   proceedOrConfirmInsufficientBalance,
@@ -67,6 +71,7 @@ export class Outcomes implements OnInit {
   private readonly outcomesService = inject(OutcomesService);
   private readonly accountsService = inject(AccountsService);
   private readonly categoriesService = inject(CategoriesService);
+  private readonly categoryMappingsService = inject(CategoryMappingsService);
   private readonly categoryMatch = inject(CategoryMatchService);
   private readonly confirmation = inject(ConfirmationService);
   private readonly fb = inject(FormBuilder);
@@ -96,6 +101,7 @@ export class Outcomes implements OnInit {
 
   protected readonly filtersExpanded = signal(false);
   protected readonly filterAccountId = signal<string | null>(null);
+  protected readonly filterCategoryId = signal<string | null>(null);
   protected readonly filterDateFrom = signal<Date | null>(null);
   protected readonly filterDateTo = signal<Date | null>(null);
 
@@ -108,6 +114,10 @@ export class Outcomes implements OnInit {
   });
 
   protected readonly accountOptions = computed(() => accountFilterOptions(this.accounts()));
+
+  protected readonly categoryFilterSelectOptions = computed(() =>
+    categoryFilterOptions(this.categories()),
+  );
 
   protected readonly categoryOptions = computed(() =>
     categorySelectOptions(this.categories()),
@@ -238,11 +248,14 @@ export class Outcomes implements OnInit {
         categoryMapping = fallbackCategoryMapping(bankCategories, this.categories());
       }
 
+      const storedMappings = await this.categoryMappingsService.listByBankCategory();
+
       const items = buildOutcomeImports(
         rows,
         this.accounts(),
         this.categories(),
         categoryMapping,
+        storedMappings,
       );
 
       const savable = items.filter(isImportSavable);
@@ -276,6 +289,7 @@ export class Outcomes implements OnInit {
             : (item.accountName ?? ''),
           bankCategory: item.bankCategory,
           category: item.categoryName ?? item.categoryId,
+          categoryBy: item.categoryMatchedBy ?? '',
           saved: isImportSavable(item) ? 'yes' : 'no',
           error: item.error ?? '',
         })),
@@ -307,6 +321,7 @@ export class Outcomes implements OnInit {
 
   protected async clearFilters(): Promise<void> {
     this.filterAccountId.set(null);
+    this.filterCategoryId.set(null);
     this.filterDateFrom.set(null);
     this.filterDateTo.set(null);
     await this.reloadOutcomes();
@@ -430,6 +445,7 @@ export class Outcomes implements OnInit {
     this.outcomes.set(
       await this.outcomesService.list({
         accountId: this.filterAccountId() ?? undefined,
+        categoryId: this.filterCategoryId() ?? undefined,
         dateFrom: dateFrom ? toIsoDateString(dateFrom) : undefined,
         dateTo: dateTo ? toIsoDateString(dateTo) : undefined,
       }),
