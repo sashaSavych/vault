@@ -72,6 +72,7 @@ export class Incomes implements OnInit {
     this.editingId() ? 'Edit income' : 'Create income',
   );
 
+  protected readonly filtersExpanded = signal(false);
   protected readonly filterAccountId = signal<string | null>(null);
   protected readonly filterDateFrom = signal<Date | null>(null);
   protected readonly filterDateTo = signal<Date | null>(null);
@@ -150,6 +151,10 @@ export class Incomes implements OnInit {
     this.dialogVisible.set(false);
     this.editingId.set(null);
     this.dialogErrorMessage.set(null);
+  }
+
+  protected toggleFilters(): void {
+    this.filtersExpanded.update((expanded) => !expanded);
   }
 
   protected async applyFilters(): Promise<void> {

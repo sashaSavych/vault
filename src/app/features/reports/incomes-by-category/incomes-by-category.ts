@@ -81,6 +81,7 @@ export class IncomesByCategoryReport implements OnInit {
   protected readonly editingId = signal<string | null>(null);
   protected readonly selectedCategory = signal<SelectedCategory | null>(null);
 
+  protected readonly filtersExpanded = signal(false);
   protected readonly filterCategoryId = signal<string | null>(null);
   protected readonly filterDateFrom = signal<Date | null>(null);
   protected readonly filterDateTo = signal<Date | null>(null);
@@ -118,6 +119,10 @@ export class IncomesByCategoryReport implements OnInit {
       return null;
     }
     return formatBalance(account.balance, account.currency);
+  }
+
+  protected toggleFilters(): void {
+    this.filtersExpanded.update((expanded) => !expanded);
   }
 
   protected async applyFilters(): Promise<void> {

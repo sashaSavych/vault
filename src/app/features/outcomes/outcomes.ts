@@ -94,6 +94,7 @@ export class Outcomes implements OnInit {
     this.editingId() ? 'Edit outcome' : 'Create outcome',
   );
 
+  protected readonly filtersExpanded = signal(false);
   protected readonly filterAccountId = signal<string | null>(null);
   protected readonly filterDateFrom = signal<Date | null>(null);
   protected readonly filterDateTo = signal<Date | null>(null);
@@ -294,6 +295,10 @@ export class Outcomes implements OnInit {
     } finally {
       this.importing.set(false);
     }
+  }
+
+  protected toggleFilters(): void {
+    this.filtersExpanded.update((expanded) => !expanded);
   }
 
   protected async applyFilters(): Promise<void> {
