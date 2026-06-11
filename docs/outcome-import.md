@@ -11,7 +11,7 @@ Sheet name is typically "Виписки". Row 0 may be a period title; row 1 is 
 | Amount | Сума в валюті транзакції | Absolute value used |
 | Date | Дата | DD.MM.YYYY, time part ignored |
 | Category | Категорія | Matched via Gemini AI (see below) |
-| Account | Картка | Last 4 digits matched to account `card_id` |
+| Account | Картка | Last 4 digits matched to any value in account `card_ids` |
 
 ## Category matching (Supabase Edge Function + Gemini)
 
@@ -39,7 +39,7 @@ Configure `chatAiEndpoint` in `src/environments/environment.ts`.
 
 - Only debit rows are imported: **Сума в валюті картки** must be negative (money leaving the card).
 - Credits (positive card amount), e.g. "Зарахування зі своєї картки", are skipped.
-- Account is resolved by the last 4 digits of the masked card number (e.g. `4627 **** **** 8458` → `8458`).
+- Account is resolved by the last 4 digits of the masked card number (e.g. `4627 **** **** 8458` → `8458`), checked against all IDs on the account.
 - Rows with no matching account are assigned to an account named **Undefined** if it exists.
 - Rows that cannot be resolved (invalid date/amount, missing category) are skipped; valid rows are saved to `outcomes`.
 

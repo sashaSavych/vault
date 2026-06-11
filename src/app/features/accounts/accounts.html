@@ -182,20 +182,19 @@
     </div>
 
     <div class="flex flex-col gap-1">
-      <label for="account-card-id" class="text-sm font-medium">ID</label>
+      <label for="account-card-ids" class="text-sm font-medium">IDs</label>
       <input
         pInputText
-        id="account-card-id"
-        formControlName="cardId"
+        id="account-card-ids"
+        formControlName="cardIds"
         class="w-full tabular-nums"
-        maxlength="4"
-        inputmode="numeric"
         autocomplete="off"
-        placeholder="0000"
-        [invalid]="showError('cardId')"
+        placeholder="8458, 1234"
+        [invalid]="showError('cardIds')"
       />
-      @if (showError('cardId')) {
-        <small class="text-red-500">Enter exactly 4 digits.</small>
+      <small class="text-muted-color">Comma-separated last 4 digits for statement import</small>
+      @if (showError('cardIds')) {
+        <small class="text-red-500">Enter one or more 4-digit IDs.</small>
       }
     </div>
 

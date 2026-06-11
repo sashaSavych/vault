@@ -1,6 +1,12 @@
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { Button } from 'primeng/button';
 import { Dialog } from 'primeng/dialog';
 import { InputNumber } from 'primeng/inputnumber';
@@ -18,10 +24,26 @@ import {
   accountTypeClasses,
 } from '../../shared/constants/account-types';
 import { CURRENCIES } from '../../shared/constants/currencies';
+import {
+  formatCardIdsInput,
+  isValidCardIds,
+  parseCardIdsInput,
+} from '../../shared/utils/account-card-ids';
 import { formatBalance } from '../../shared/utils/format-balance';
 import { toErrorMessage } from '../../shared/utils/to-error-message';
 
-const DEFAULT_CARD_ID = '0000';
+const DEFAULT_CARD_IDS = '0000';
+
+function cardIdsValidator(control: AbstractControl): ValidationErrors | null {
+  const cardIds = parseCardIdsInput(String(control.value ?? ''));
+  if (cardIds.length === 0) {
+    return { required: true };
+  }
+  if (!isValidCardIds(cardIds)) {
+    return { cardIdFormat: true };
+  }
+  return null;
+}
 
 @Component({
   selector: 'app-accounts',
@@ -76,10 +98,7 @@ export class Accounts implements OnInit {
 
   protected readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(80)]],
-    cardId: [
-      DEFAULT_CARD_ID,
-      [Validators.required, Validators.pattern(/^\d{4}$/)],
-    ],
+    cardIds: [DEFAULT_CARD_IDS, [Validators.required, cardIdsValidator]],
     currency: ['UAH', Validators.required],
     icon: ['pi-wallet', Validators.required],
     balance: [0, Validators.required],
@@ -98,7 +117,7 @@ export class Accounts implements OnInit {
     this.dialogErrorMessage.set(null);
     this.form.reset({
       name: '',
-      cardId: DEFAULT_CARD_ID,
+      cardIds: DEFAULT_CARD_IDS,
       currency: 'UAH',
       icon: 'pi-wallet',
       balance: 0,
@@ -113,7 +132,7 @@ export class Accounts implements OnInit {
     this.dialogErrorMessage.set(null);
     this.form.reset({
       name: account.name,
-      cardId: account.cardId,
+      cardIds: formatCardIdsInput(account.cardIds),
       currency: account.currency,
       icon: account.icon,
       balance: account.balance,
@@ -155,7 +174,7 @@ export class Accounts implements OnInit {
         name: raw.name,
         currency: raw.currency,
         icon: raw.icon,
-        cardId: raw.cardId,
+        cardIds: parseCardIdsInput(raw.cardIds),
         balance: raw.balance,
         isDefault: raw.isDefault,
       };
@@ -250,7 +269,7 @@ export class Accounts implements OnInit {
     }
   }
 
-  protected showError(controlName: 'name' | 'cardId'): boolean {
+  protected showError(controlName: 'name' | 'cardIds'): boolean {
     const control = this.form.controls[controlName];
     return control.invalid && control.touched;
   }

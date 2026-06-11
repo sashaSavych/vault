@@ -4,7 +4,7 @@ export interface Account {
   name: string;
   currency: string;
   icon: string;
-  cardId: string;
+  cardIds: string[];
   balance: number;
   isDefault: boolean;
   sortOrder: number;
@@ -16,7 +16,7 @@ export interface AccountInput {
   name: string;
   currency: string;
   icon: string;
-  cardId: string;
+  cardIds: string[];
   balance: number;
   isDefault: boolean;
 }
@@ -27,7 +27,7 @@ export interface AccountRow {
   name: string;
   currency: string;
   icon: string;
-  card_id: string;
+  card_ids: string[] | null;
   balance: number | string;
   is_default: boolean;
   sort_order: number;
@@ -36,13 +36,15 @@ export interface AccountRow {
 }
 
 export function mapAccount(row: AccountRow): Account {
+  const cardIds = row.card_ids?.length ? row.card_ids : ['0000'];
+
   return {
     id: row.id,
     userId: row.user_id,
     name: row.name,
     currency: row.currency,
     icon: row.icon,
-    cardId: row.card_id ?? '0000',
+    cardIds,
     balance: Number(row.balance),
     isDefault: row.is_default,
     sortOrder: row.sort_order ?? 0,

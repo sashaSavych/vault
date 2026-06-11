@@ -139,7 +139,7 @@ export class AccountsService {
       name: input.name.trim(),
       currency: input.currency,
       icon: input.icon,
-      card_id: input.cardId,
+      card_ids: input.cardIds,
       balance: input.balance,
       is_default: input.isDefault,
     };

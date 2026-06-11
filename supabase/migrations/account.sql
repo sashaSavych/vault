@@ -1,4 +1,4 @@
--- Accounts: balance, 4-digit card_id, RLS, single default trigger.
+-- Accounts: balance, card_ids (4-digit values for import matching), RLS, single default trigger.
 -- Safe to re-run. Run before transfer.sql.
 
 create table if not exists public.accounts (
@@ -7,7 +7,7 @@ create table if not exists public.accounts (
   name text not null check (char_length(trim(name)) > 0),
   currency char(3) not null check (currency ~ '^[A-Z]{3}$'),
   icon text not null default 'pi-wallet',
-  card_id char(4) not null default '0000' check (card_id ~ '^\d{4}$'),
+  card_ids text[] not null default array['0000'],
   balance numeric(19, 4) not null default 0,
   is_default boolean not null default false,
   created_at timestamptz not null default now()
@@ -17,25 +17,51 @@ alter table public.accounts
   add column if not exists balance numeric(19, 4) not null default 0;
 
 alter table public.accounts
-  add column if not exists card_id char(4);
+  add column if not exists card_ids text[];
 
 alter table public.accounts drop constraint if exists accounts_card_id_required_check;
 alter table public.accounts drop constraint if exists accounts_account_type_check;
 
 update public.accounts
-set card_id = '0000'
-where card_id is null;
+set card_ids = array['0000']
+where card_ids is null;
 
 alter table public.accounts
-  alter column card_id set default '0000';
+  alter column card_ids set default array['0000'];
 
 alter table public.accounts
-  alter column card_id set not null;
+  alter column card_ids set not null;
+
+create or replace function public.valid_account_card_ids(ids text[])
+returns boolean
+language plpgsql
+immutable
+set search_path = public
+as $$
+declare
+  id text;
+begin
+  if coalesce(array_length(ids, 1), 0) < 1 then
+    return false;
+  end if;
+
+  foreach id in array ids loop
+    if id !~ '^\d{4}$' then
+      return false;
+    end if;
+  end loop;
+
+  return true;
+end;
+$$;
+
+alter table public.accounts drop constraint if exists accounts_card_ids_format_check;
+alter table public.accounts
+  add constraint accounts_card_ids_format_check
+  check (public.valid_account_card_ids(card_ids));
 
 alter table public.accounts drop constraint if exists accounts_card_id_format_check;
-alter table public.accounts
-  add constraint accounts_card_id_format_check
-  check (card_id ~ '^\d{4}$');
+alter table public.accounts drop column if exists card_id;
 
 alter table public.accounts drop column if exists account_type;
 

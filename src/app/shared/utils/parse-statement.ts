@@ -1,6 +1,7 @@
 import type { Account } from '../../core/models/account';
 import type { Category } from '../../core/models/category';
 import type { OutcomeInput } from '../../core/models/outcome';
+import { accountMatchesCardLast4 } from './account-card-ids';
 import { categoryLabel } from './category-select-options';
 
 export const COL_DATE = 'Дата';
@@ -129,14 +130,6 @@ export function parseCardLast4(card: string): string | null {
   return null;
 }
 
-export function normalizeAccountCardId(cardId: string): string {
-  const digits = cardId.replace(/\D/g, '');
-  if (digits.length === 0) {
-    return '';
-  }
-  return digits.slice(-4).padStart(4, '0');
-}
-
 export function findAccountByCardLast4(
   cardValue: string,
   accounts: Account[],
@@ -146,9 +139,7 @@ export function findAccountByCardLast4(
     return { cardLast4: null };
   }
 
-  const account = accounts.find(
-    (item) => normalizeAccountCardId(item.cardId) === cardLast4,
-  );
+  const account = accounts.find((item) => accountMatchesCardLast4(item, cardLast4));
 
   return { account, cardLast4 };
 }
@@ -211,7 +202,7 @@ export function buildOutcomeImports(
       date: date ?? '',
       bankCategory: row.bankCategory,
       cardLast4: cardLast4 ?? undefined,
-      accountCardId: account ? normalizeAccountCardId(account.cardId) : undefined,
+      accountCardId: matchedAccount ? cardLast4 ?? undefined : undefined,
       accountName: account?.name,
       accountFallback: accountFallback || undefined,
       categoryName: categoryId ? categoryLabel(categories, categoryId) : undefined,
