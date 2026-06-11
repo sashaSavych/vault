@@ -1,6 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
 import { Button } from 'primeng/button';
 import { ConfirmDialog } from 'primeng/confirmdialog';
@@ -23,7 +22,6 @@ const NO_PARENT = '';
 @Component({
   selector: 'app-categories',
   imports: [
-    RouterLink,
     ReactiveFormsModule,
     Button,
     Dialog,

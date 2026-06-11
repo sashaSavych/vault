@@ -5,7 +5,6 @@ export interface NavPage {
 }
 
 export const APP_NAV_PAGES: NavPage[] = [
-  { path: '/', label: 'Home', icon: 'pi-home' },
   { path: '/accounts', label: 'Accounts', icon: 'pi-wallet' },
   { path: '/categories', label: 'Categories', icon: 'pi-tags' },
   { path: '/incomes', label: 'Incomes', icon: 'pi-plus-circle' },

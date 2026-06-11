@@ -10,15 +10,14 @@ import { IncomesByCategoryReport } from './features/reports/incomes-by-category/
 import { OutcomesByCategoryReport } from './features/reports/outcomes-by-category/outcomes-by-category';
 import { Reports } from './features/reports/reports';
 import { Transfers } from './features/transfers/transfers';
-import { Home } from './features/home/home';
 import { Login } from './features/auth/login/login';
 import { Signup } from './features/auth/signup/signup';
 
 export const routes: Routes = [
   {
     path: '',
-    component: Home,
-    canActivate: [authGuard],
+    pathMatch: 'full',
+    redirectTo: 'accounts',
   },
   {
     path: 'accounts',
@@ -77,6 +76,6 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: '',
+    redirectTo: 'accounts',
   },
 ];

@@ -46,7 +46,7 @@ export class AuthService {
     if (error) {
       return { success: false, message: toAuthMessage(error) };
     }
-    await this.router.navigateByUrl('/');
+    await this.router.navigateByUrl('/accounts');
     return { success: true };
   }
 
@@ -57,7 +57,7 @@ export class AuthService {
     }
 
     if (data.session) {
-      await this.router.navigateByUrl('/');
+      await this.router.navigateByUrl('/accounts');
       return { success: true };
     }
 

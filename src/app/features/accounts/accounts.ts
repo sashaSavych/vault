@@ -1,7 +1,6 @@
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { Button } from 'primeng/button';
 import { Dialog } from 'primeng/dialog';
 import { InputNumber } from 'primeng/inputnumber';
@@ -27,7 +26,6 @@ const DEFAULT_CARD_ID = '0000';
 @Component({
   selector: 'app-accounts',
   imports: [
-    RouterLink,
     DragDropModule,
     ReactiveFormsModule,
     Button,

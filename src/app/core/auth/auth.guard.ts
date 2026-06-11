@@ -26,7 +26,7 @@ export const guestGuard: CanActivateFn = async () => {
     return true;
   }
 
-  return router.createUrlTree(['/']);
+  return router.createUrlTree(['/accounts']);
 };
 
 function waitUntilReady(auth: AuthService): Promise<void> {
