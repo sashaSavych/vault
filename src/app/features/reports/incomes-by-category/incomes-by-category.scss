@@ -1,0 +1,19 @@
+:host {
+  display: block;
+}
+
+.report-grid {
+  user-select: text;
+  -webkit-user-select: text;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  white-space: pre;
+  tab-size: 4;
+}
+
+.report-grid-row {
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}

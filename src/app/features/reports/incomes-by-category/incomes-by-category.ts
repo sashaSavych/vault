@@ -28,6 +28,13 @@ import { AccountSelectLabel } from '../../../shared/components/account-select-la
 import { accountSelectOptions } from '../../../shared/utils/account-select-options';
 import { categorySelectOptions } from '../../../shared/utils/category-select-options';
 import { formatBalance } from '../../../shared/utils/format-balance';
+import {
+  formatPercentOfTotal,
+  formatReportGridLine,
+  formatThousandsAbs,
+  reportRowTotalAmount,
+  type ReportViewMode,
+} from '../../../shared/utils/format-report-grid';
 import { formatDate, parseIsoDate, toIsoDateString } from '../../../shared/utils/format-date';
 import { toErrorMessage } from '../../../shared/utils/to-error-message';
 
@@ -65,6 +72,10 @@ export class IncomesByCategoryReport implements OnInit {
   protected readonly auth = inject(AuthService);
   protected readonly formatBalance = formatBalance;
   protected readonly formatDate = formatDate;
+  protected readonly formatPercentOfTotal = formatPercentOfTotal;
+  protected readonly formatReportGridLine = formatReportGridLine;
+  protected readonly formatThousandsAbs = formatThousandsAbs;
+  protected readonly reportRowTotalAmount = reportRowTotalAmount;
 
   protected readonly accounts = signal<Account[]>([]);
   protected readonly categories = signal<Category[]>([]);
@@ -81,6 +92,7 @@ export class IncomesByCategoryReport implements OnInit {
   protected readonly editingId = signal<string | null>(null);
   protected readonly selectedCategory = signal<SelectedCategory | null>(null);
 
+  protected readonly reportView = signal<ReportViewMode>('list');
   protected readonly filtersExpanded = signal(false);
   protected readonly filterCategoryId = signal<string | null>(null);
   protected readonly filterDateFrom = signal<Date | null>(null);
@@ -138,6 +150,10 @@ export class IncomesByCategoryReport implements OnInit {
     this.filterDateTo.set(null);
     this.closeCategoryDetail();
     await this.runReport();
+  }
+
+  protected grandTotalForCurrency(currency: string): number {
+    return this.grandTotals().find((total) => total.currency === currency)?.amount ?? 0;
   }
 
   protected openCategory(row: IncomeCategoryReportRow): void {
