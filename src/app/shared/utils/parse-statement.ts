@@ -1,6 +1,7 @@
 import type { Account } from '../../core/models/account';
 import type { Category } from '../../core/models/category';
 import { normalizeOutcomeName, type OutcomeInput } from '../../core/models/outcome';
+import { roundMoneyAmount } from './format-balance';
 import { accountMatchesCardLast4 } from './account-card-ids';
 import { categoryLabel } from './category-select-options';
 
@@ -221,7 +222,7 @@ export function buildOutcomeImports(
       name: normalizeOutcomeName(row.name),
       accountId: account?.id ?? '',
       categoryId,
-      amount: row.transactionAmount,
+      amount: roundMoneyAmount(row.transactionAmount),
       date: date ?? '',
       bankCategory: row.bankCategory,
       cardLast4: cardLast4 ?? undefined,

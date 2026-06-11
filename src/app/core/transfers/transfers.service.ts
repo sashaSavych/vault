@@ -6,6 +6,7 @@ import type { Transfer, TransferInput, TransferRow, TransferWithAccounts } from 
 import { mapTransfer } from '../models/transfer';
 import { AuthService } from '../auth/auth.service';
 import { getSupabaseClient } from '../supabase/supabase';
+import { roundMoneyAmount } from '../../shared/utils/format-balance';
 
 @Injectable({ providedIn: 'root' })
 export class TransfersService {
@@ -43,8 +44,8 @@ export class TransfersService {
         name: input.name.trim(),
         from_account_id: input.fromAccountId,
         to_account_id: input.toAccountId,
-        amount_from: input.amountFrom,
-        amount_to: input.amountTo,
+        amount_from: roundMoneyAmount(input.amountFrom),
+        amount_to: roundMoneyAmount(input.amountTo),
         exchange_rate: input.exchangeRate,
         date: input.date,
       })

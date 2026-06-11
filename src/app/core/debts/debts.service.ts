@@ -16,6 +16,7 @@ import type {
 } from '../models/debt';
 import { mapDebt, mapDebtOperation } from '../models/debt';
 import { getSupabaseClient } from '../supabase/supabase';
+import { roundMoneyAmount } from '../../shared/utils/format-balance';
 
 @Injectable({ providedIn: 'root' })
 export class DebtsService {
@@ -80,8 +81,8 @@ export class DebtsService {
         user_id: this.requireUserId(),
         name: input.name.trim(),
         account_id: input.accountId,
-        amount: input.amount,
-        balance: input.amount,
+        amount: roundMoneyAmount(input.amount),
+        balance: roundMoneyAmount(input.amount),
         date: input.date,
         type: input.type,
       })
@@ -113,7 +114,7 @@ export class DebtsService {
         debt_id: input.debtId,
         name: input.name.trim(),
         account_id: input.accountId,
-        amount: input.amount,
+        amount: roundMoneyAmount(input.amount),
         date: input.date,
         notes: input.notes.trim() || null,
         type: input.type,

@@ -15,6 +15,7 @@ import { mapOutcome, normalizeOutcomeName } from '../models/outcome';
 import { AuthService } from '../auth/auth.service';
 import { getSupabaseClient } from '../supabase/supabase';
 import { categoryLabel } from '../../shared/utils/category-select-options';
+import { roundMoneyAmount } from '../../shared/utils/format-balance';
 
 @Injectable({ providedIn: 'root' })
 export class OutcomesService {
@@ -70,7 +71,7 @@ export class OutcomesService {
         name: normalizeOutcomeName(input.name),
         account_id: input.accountId,
         category_id: input.categoryId,
-        amount: input.amount,
+        amount: roundMoneyAmount(input.amount),
         date: input.date,
       })
       .select('*')
@@ -100,7 +101,7 @@ export class OutcomesService {
           name: normalizeOutcomeName(input.name),
           account_id: input.accountId,
           category_id: input.categoryId,
-          amount: input.amount,
+          amount: roundMoneyAmount(input.amount),
           date: input.date,
         })),
       )
@@ -123,7 +124,7 @@ export class OutcomesService {
         name: normalizeOutcomeName(input.name),
         account_id: input.accountId,
         category_id: input.categoryId,
-        amount: input.amount,
+        amount: roundMoneyAmount(input.amount),
         date: input.date,
       })
       .eq('id', id)

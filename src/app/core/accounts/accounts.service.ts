@@ -4,6 +4,7 @@ import { AuthService } from '../auth/auth.service';
 import type { Account, AccountInput, AccountListOptions, AccountRow } from '../models/account';
 import { mapAccount } from '../models/account';
 import { getSupabaseClient } from '../supabase/supabase';
+import { roundMoneyAmount } from '../../shared/utils/format-balance';
 
 @Injectable({ providedIn: 'root' })
 export class AccountsService {
@@ -140,7 +141,7 @@ export class AccountsService {
       currency: input.currency,
       icon: input.icon,
       card_ids: input.cardIds,
-      balance: input.balance,
+      balance: roundMoneyAmount(input.balance),
       is_default: input.isDefault,
     };
   }
