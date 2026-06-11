@@ -32,6 +32,7 @@ jobs:
         env:
           SUPABASE_URL: ${{ vars.SUPABASE_URL || secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY || secrets.SUPABASE_PUBLISHABLE_KEY }}
+          CHAT_AI_ENDPOINT: ${{ vars.CHAT_AI_ENDPOINT || secrets.CHAT_AI_ENDPOINT }}
         run: node scripts/create-environment.mjs
 
       - run: npm run build:pages

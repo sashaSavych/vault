@@ -10,9 +10,13 @@ if (!url || !key) {
   process.exit(1);
 }
 
+const chatAiEndpoint =
+  process.env.CHAT_AI_ENDPOINT?.trim() || `${url.replace(/\/$/, '')}/functions/v1/match-categories`;
+
 const contents = `export const environment = {
   supabaseUrl: ${JSON.stringify(url)},
   supabasePublishableKey: ${JSON.stringify(key)},
+  chatAiEndpoint: ${JSON.stringify(chatAiEndpoint)},
 };
 `;
 
