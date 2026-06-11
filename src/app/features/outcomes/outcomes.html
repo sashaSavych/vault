@@ -203,17 +203,19 @@
               <div class="min-w-0 flex-1">
                 <h2 class="font-medium">{{ outcome.name }}</h2>
                 <p class="mt-1 text-sm text-muted-color">{{ formatDate(outcome.date) }}</p>
-                <p class="mt-2 text-sm">
-                  <span class="text-muted-color mr-1">Category:</span>
-                  <span class="font-medium">{{ outcome.categoryName }}</span>
-                </p>
-                <p class="mt-1 text-sm">
-                  <span class="text-muted-color mr-1">Account:</span>
-                  <span class="font-medium">{{ outcome.accountName }}</span>
-                </p>
-                <p class="mt-2 font-semibold tabular-nums text-primary">
-                  −{{ formatBalance(outcome.amount, outcome.accountCurrency) }}
-                </p>
+                <div class="outcome-card-meta mt-2 text-sm">
+                  <span class="min-w-0 truncate">
+                    <span class="text-muted-color mr-1">Category:</span>
+                    <span class="font-medium">{{ outcome.categoryName }}</span>
+                  </span>
+                  <span class="min-w-0 truncate">
+                    <span class="text-muted-color mr-1">Account:</span>
+                    <span class="font-medium">{{ outcome.accountName }}</span>
+                  </span>
+                  <span class="font-semibold tabular-nums text-primary">
+                    −{{ formatBalance(outcome.amount, outcome.accountCurrency) }}
+                  </span>
+                </div>
               </div>
               <div class="flex shrink-0 gap-1">
                 <p-button
