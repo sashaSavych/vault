@@ -120,7 +120,7 @@ export class OutcomesByCategoryReport implements OnInit {
 
   protected readonly form = this.fb.nonNullable.group({
     name: ['Outcome', [Validators.required, Validators.maxLength(80)]],
-    amount: [0, [Validators.required, Validators.min(0.01)]],
+    amount: [0, [Validators.required, Validators.min(1)]],
     date: [new Date(), Validators.required],
     categoryId: ['', Validators.required],
     accountId: ['', Validators.required],

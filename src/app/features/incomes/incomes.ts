@@ -83,7 +83,7 @@ export class Incomes implements OnInit {
 
   protected readonly form = this.fb.nonNullable.group({
     name: ['Income', [Validators.required, Validators.maxLength(80)]],
-    amount: [0, [Validators.required, Validators.min(0.01)]],
+    amount: [0, [Validators.required, Validators.min(1)]],
     date: [new Date(), Validators.required],
     categoryId: ['', Validators.required],
     accountId: ['', Validators.required],

@@ -195,9 +195,8 @@
       <p-inputnumber
         inputId="amount-from"
         formControlName="amountFrom"
-        mode="decimal"
-        [minFractionDigits]="2"
-        [maxFractionDigits]="2"
+        [minFractionDigits]="0"
+        [maxFractionDigits]="0"
         styleClass="w-full"
         inputStyleClass="w-full"
         (onInput)="onAmountFromChange()"
@@ -226,9 +225,8 @@
       <p-inputnumber
         inputId="amount-to"
         formControlName="amountTo"
-        mode="decimal"
-        [minFractionDigits]="2"
-        [maxFractionDigits]="2"
+        [minFractionDigits]="0"
+        [maxFractionDigits]="0"
         styleClass="w-full"
         inputStyleClass="w-full"
         [readonly]="!isCrossCurrency()"

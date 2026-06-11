@@ -97,7 +97,7 @@ export class Debts implements OnInit {
   protected readonly debtForm = this.fb.nonNullable.group({
     name: ['Debt', [Validators.required, Validators.maxLength(80)]],
     accountId: ['', Validators.required],
-    amount: [0, [Validators.required, Validators.min(0.01)]],
+    amount: [0, [Validators.required, Validators.min(1)]],
     date: [new Date(), Validators.required],
     type: ['borrow' as DebtType, Validators.required],
   });
@@ -105,7 +105,7 @@ export class Debts implements OnInit {
   protected readonly operationForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(80)]],
     accountId: ['', Validators.required],
-    amount: [0, [Validators.required, Validators.min(0.01)]],
+    amount: [0, [Validators.required, Validators.min(1)]],
     date: [new Date(), Validators.required],
     notes: ['', Validators.maxLength(500)],
   });

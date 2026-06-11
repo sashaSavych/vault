@@ -68,8 +68,8 @@ export class Transfers implements OnInit {
     name: ['Transfer', [Validators.required, Validators.maxLength(80)]],
     fromAccountId: ['', Validators.required],
     toAccountId: ['', Validators.required],
-    amountFrom: [0, [Validators.required, Validators.min(0.01)]],
-    amountTo: [0, [Validators.required, Validators.min(0.01)]],
+    amountFrom: [0, [Validators.required, Validators.min(1)]],
+    amountTo: [0, [Validators.required, Validators.min(1)]],
     exchangeRate: [1, [Validators.required, Validators.min(0.00000001)]],
     date: [new Date(), Validators.required],
   });
@@ -285,7 +285,7 @@ export class Transfers implements OnInit {
 }
 
 function roundMoney(value: number): number {
-  return Math.round(value * 100) / 100;
+  return Math.round(value);
 }
 
 function roundRate(value: number): number {
