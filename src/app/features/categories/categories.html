@@ -5,7 +5,7 @@
       <p class="text-sm text-muted-color">Group incomes and outcomes</p>
     </div>
     <p-button
-      label="Sign out"
+      [label]="auth.userDisplayName()"
       icon="pi pi-sign-out"
       severity="secondary"
       (onClick)="auth.signOut()"

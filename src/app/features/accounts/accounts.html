@@ -7,7 +7,7 @@
     <div class="flex gap-2">
       <p-button label="Add account" icon="pi pi-plus" (onClick)="openCreate()" />
       <p-button
-        label="Sign out"
+        [label]="auth.userDisplayName()"
         icon="pi pi-sign-out"
         severity="secondary"
         (onClick)="auth.signOut()"

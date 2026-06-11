@@ -18,6 +18,7 @@ export class AuthService {
 
   readonly session = this.sessionSignal.asReadonly();
   readonly user = computed<User | null>(() => this.sessionSignal()?.user ?? null);
+  readonly userDisplayName = computed(() => emailLocalPart(this.user()?.email));
   readonly isAuthenticated = computed(() => this.sessionSignal() !== null);
   readonly isReady = this.readySignal.asReadonly();
 
@@ -71,6 +72,16 @@ export class AuthService {
     await this.supabase.auth.signOut();
     await this.router.navigateByUrl('/login');
   }
+}
+
+function emailLocalPart(email: string | undefined): string {
+  const value = email?.trim();
+  if (!value) {
+    return 'User';
+  }
+
+  const at = value.indexOf('@');
+  return at > 0 ? value.slice(0, at) : value;
 }
 
 function toAuthMessage(error: AuthError): string {

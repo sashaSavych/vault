@@ -37,7 +37,7 @@
       </div>
     </div>
     <p-button
-      label="Sign out"
+      [label]="auth.userDisplayName()"
       icon="pi pi-sign-out"
       severity="secondary"
       (onClick)="auth.signOut()"

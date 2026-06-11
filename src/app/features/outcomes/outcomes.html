@@ -28,7 +28,7 @@
         [disabled]="accounts().length === 0 || categories().length === 0"
       />
       <p-button
-        label="Sign out"
+        [label]="auth.userDisplayName()"
         icon="pi pi-sign-out"
         severity="secondary"
         (onClick)="auth.signOut()"
