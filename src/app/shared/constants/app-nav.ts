@@ -52,6 +52,15 @@ export const APP_NAV_PAGES: NavPage[] = [
     sections: [{ id: 'transfer-list', label: 'List' }],
   },
   {
+    path: '/debts',
+    label: 'Debts',
+    icon: 'pi-book',
+    sections: [
+      { id: 'filters', label: 'Filters' },
+      { id: 'debt-list', label: 'List' },
+    ],
+  },
+  {
     path: '/reports',
     label: 'Reports',
     icon: 'pi-chart-bar',

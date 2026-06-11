@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/auth/auth.guard';
 import { Accounts } from './features/accounts/accounts';
 import { Categories } from './features/categories/categories';
+import { Debts } from './features/debts/debts';
 import { Incomes } from './features/incomes/incomes';
 import { Outcomes } from './features/outcomes/outcomes';
 import { IncomesByCategoryReport } from './features/reports/incomes-by-category/incomes-by-category';
@@ -37,6 +38,11 @@ export const routes: Routes = [
   {
     path: 'transfers',
     component: Transfers,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'debts',
+    component: Debts,
     canActivate: [authGuard],
   },
   {
