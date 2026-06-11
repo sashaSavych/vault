@@ -170,11 +170,11 @@
                 <h2 class="font-medium">{{ income.name }}</h2>
                 <p class="mt-1 text-sm text-muted-color">{{ formatDate(income.date) }}</p>
                 <p class="mt-2 text-sm">
-                  <span class="text-muted-color">Category:</span>
+                  <span class="text-muted-color mr-1">Category:</span>
                   <span class="font-medium">{{ income.categoryName }}</span>
                 </p>
                 <p class="mt-1 text-sm">
-                  <span class="text-muted-color">Account:</span>
+                  <span class="text-muted-color mr-1">Account:</span>
                   <span class="font-medium">{{ income.accountName }}</span>
                 </p>
                 <p class="mt-2 font-semibold tabular-nums text-green-600 dark:text-green-400">
@@ -259,8 +259,7 @@
       </p-select>
       @if (accountBalance(form.controls.accountId.value); as balance) {
         <small class="text-muted-color"
-          >Balance:
-          <span class="font-medium tabular-nums">{{ balance }}</span></small
+          >Balance: <span class="font-medium tabular-nums">{{ balance }}</span></small
         >
       }
     </div>
