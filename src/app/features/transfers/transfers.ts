@@ -18,6 +18,10 @@ import type { TransferWithAccounts } from '../../core/models/transfer';
 import { TransfersService } from '../../core/transfers/transfers.service';
 import { AccountSelectLabel } from '../../shared/components/account-select-label/account-select-label';
 import { accountSelectOptions } from '../../shared/utils/account-select-options';
+import {
+  insufficientBalanceWarning,
+  proceedOrConfirmInsufficientBalance,
+} from '../../shared/utils/confirm-insufficient-balance';
 import { formatBalance } from '../../shared/utils/format-balance';
 import { formatDate, toIsoDateString } from '../../shared/utils/format-date';
 import { toErrorMessage } from '../../shared/utils/to-error-message';
@@ -161,11 +165,26 @@ export class Transfers implements OnInit {
       return;
     }
 
+    await proceedOrConfirmInsufficientBalance(
+      this.confirmation,
+      this.transferInsufficientBalanceWarning(),
+      () => this.performSave(),
+    );
+  }
+
+  private transferInsufficientBalanceWarning(): string | null {
+    const raw = this.form.getRawValue();
     const from = this.findAccount(raw.fromAccountId);
-    if (from && from.balance < raw.amountFrom) {
-      this.dialogErrorMessage.set('Insufficient balance in the source account.');
-      return;
+
+    if (!from) {
+      return null;
     }
+
+    return insufficientBalanceWarning(from.balance, raw.amountFrom, from.currency);
+  }
+
+  private async performSave(): Promise<void> {
+    const raw = this.form.getRawValue();
 
     this.saving.set(true);
     this.dialogErrorMessage.set(null);

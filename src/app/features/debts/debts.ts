@@ -31,6 +31,10 @@ import {
 } from '../../shared/constants/debt-types';
 import { AccountSelectLabel } from '../../shared/components/account-select-label/account-select-label';
 import { accountSelectOptions } from '../../shared/utils/account-select-options';
+import {
+  insufficientBalanceWarning,
+  proceedOrConfirmInsufficientBalance,
+} from '../../shared/utils/confirm-insufficient-balance';
 import { formatBalance } from '../../shared/utils/format-balance';
 import { formatDate, parseIsoDate, toIsoDateString } from '../../shared/utils/format-date';
 import { toErrorMessage } from '../../shared/utils/to-error-message';
@@ -185,13 +189,78 @@ export class Debts implements OnInit {
       return;
     }
 
-    const raw = this.debtForm.getRawValue();
-    const account = this.accounts().find((item) => item.id === raw.accountId);
+    await proceedOrConfirmInsufficientBalance(
+      this.confirmation,
+      this.debtInsufficientBalanceWarning(),
+      () => this.performSaveDebt(),
+    );
+  }
 
-    if (raw.type === 'lend' && account && account.balance < raw.amount) {
-      this.dialogErrorMessage.set('Insufficient balance in this account.');
+  protected async saveOperation(): Promise<void> {
+    if (this.operationForm.invalid) {
+      this.operationForm.markAllAsTouched();
       return;
     }
+
+    const debt = this.operationDebt();
+    if (!debt) {
+      return;
+    }
+
+    const raw = this.operationForm.getRawValue();
+    if (this.operationType() === 'repay' && raw.amount > debt.balance) {
+      this.dialogErrorMessage.set('Repayment cannot exceed the outstanding balance.');
+      return;
+    }
+
+    await proceedOrConfirmInsufficientBalance(
+      this.confirmation,
+      this.operationInsufficientBalanceWarning(),
+      () => this.performSaveOperation(),
+    );
+  }
+
+  private debtInsufficientBalanceWarning(): string | null {
+    const raw = this.debtForm.getRawValue();
+
+    if (raw.type !== 'lend') {
+      return null;
+    }
+
+    const account = this.accounts().find((item) => item.id === raw.accountId);
+    if (!account) {
+      return null;
+    }
+
+    return insufficientBalanceWarning(account.balance, raw.amount, account.currency);
+  }
+
+  private operationInsufficientBalanceWarning(): string | null {
+    const debt = this.operationDebt();
+    if (!debt) {
+      return null;
+    }
+
+    const raw = this.operationForm.getRawValue();
+    const type = this.operationType();
+    const needsBalance =
+      (debt.type === 'borrow' && type === 'repay') ||
+      (debt.type === 'lend' && type === 'increase');
+
+    if (!needsBalance) {
+      return null;
+    }
+
+    const account = this.accounts().find((item) => item.id === raw.accountId);
+    if (!account) {
+      return null;
+    }
+
+    return insufficientBalanceWarning(account.balance, raw.amount, account.currency);
+  }
+
+  private async performSaveDebt(): Promise<void> {
+    const raw = this.debtForm.getRawValue();
 
     this.saving.set(true);
     this.dialogErrorMessage.set(null);
@@ -213,34 +282,13 @@ export class Debts implements OnInit {
     }
   }
 
-  protected async saveOperation(): Promise<void> {
-    if (this.operationForm.invalid) {
-      this.operationForm.markAllAsTouched();
-      return;
-    }
-
+  private async performSaveOperation(): Promise<void> {
     const debt = this.operationDebt();
     if (!debt) {
       return;
     }
 
     const raw = this.operationForm.getRawValue();
-    const type = this.operationType();
-
-    if (type === 'repay' && raw.amount > debt.balance) {
-      this.dialogErrorMessage.set('Repayment cannot exceed the outstanding balance.');
-      return;
-    }
-
-    const account = this.accounts().find((item) => item.id === raw.accountId);
-    const needsBalance =
-      (debt.type === 'borrow' && type === 'repay') ||
-      (debt.type === 'lend' && type === 'increase');
-
-    if (account && needsBalance && account.balance < raw.amount) {
-      this.dialogErrorMessage.set('Insufficient balance in this account.');
-      return;
-    }
 
     this.saving.set(true);
     this.dialogErrorMessage.set(null);
@@ -253,7 +301,7 @@ export class Debts implements OnInit {
         amount: raw.amount,
         date: toIsoDateString(raw.date),
         notes: raw.notes,
-        type,
+        type: this.operationType(),
       });
       this.closeOperationDialog();
       await this.reload();

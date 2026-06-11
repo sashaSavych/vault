@@ -36,6 +36,10 @@ import {
   accountSelectOptions,
 } from '../../shared/utils/account-select-options';
 import { categorySelectOptions } from '../../shared/utils/category-select-options';
+import {
+  insufficientBalanceWarning,
+  proceedOrConfirmInsufficientBalance,
+} from '../../shared/utils/confirm-insufficient-balance';
 import { formatBalance } from '../../shared/utils/format-balance';
 import { formatDate, parseIsoDate, toIsoDateString } from '../../shared/utils/format-date';
 import { toErrorMessage } from '../../shared/utils/to-error-message';
@@ -309,28 +313,32 @@ export class Outcomes implements OnInit {
       return;
     }
 
+    await proceedOrConfirmInsufficientBalance(
+      this.confirmation,
+      this.outcomeInsufficientBalanceWarning(),
+      () => this.performSave(),
+    );
+  }
+
+  private outcomeInsufficientBalanceWarning(): string | null {
     const raw = this.form.getRawValue();
     const editing = this.editingOutcome();
+    const account = this.accounts().find((item) => item.id === raw.accountId);
 
-    if (editing) {
-      const account = this.accounts().find((a) => a.id === raw.accountId);
-      if (account) {
-        const available =
-          raw.accountId === editing.accountId
-            ? account.balance + editing.amount
-            : account.balance;
-        if (available < raw.amount) {
-          this.dialogErrorMessage.set('Insufficient balance in this account.');
-          return;
-        }
-      }
-    } else {
-      const account = this.accounts().find((a) => a.id === raw.accountId);
-      if (account && account.balance < raw.amount) {
-        this.dialogErrorMessage.set('Insufficient balance in this account.');
-        return;
-      }
+    if (!account) {
+      return null;
     }
+
+    const available =
+      editing && raw.accountId === editing.accountId
+        ? account.balance + editing.amount
+        : account.balance;
+
+    return insufficientBalanceWarning(available, raw.amount, account.currency);
+  }
+
+  private async performSave(): Promise<void> {
+    const raw = this.form.getRawValue();
 
     this.saving.set(true);
     this.dialogErrorMessage.set(null);
