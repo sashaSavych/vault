@@ -34,7 +34,7 @@
         <i class="pi pi-spin pi-spinner text-2xl text-muted-color"></i>
         <p class="mt-3 text-muted-color">Loading accounts…</p>
       </div>
-    } @else if (accounts().length === 0) {
+    } @else if (activeAccounts().length === 0 && archivedAccounts().length === 0) {
       <div
         class="flex flex-col items-center rounded-2xl border border-dashed border-surface-300 bg-surface-0 p-10 text-center dark:border-surface-700 dark:bg-surface-900"
       >
@@ -46,49 +46,105 @@
         <p-button class="mt-6" label="Add account" icon="pi pi-plus" (onClick)="openCreate()" />
       </div>
     } @else {
-      <ul class="grid gap-3 sm:grid-cols-2">
-        @for (account of accounts(); track account.id) {
-          <li
-            class="flex items-start gap-4 rounded-2xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-800 dark:bg-surface-900"
-          >
-            <div
-              class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
+      @if (activeAccounts().length > 0) {
+        <ul class="grid gap-3 sm:grid-cols-2">
+          @for (account of activeAccounts(); track account.id) {
+            <li
+              class="flex items-start gap-4 rounded-2xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-800 dark:bg-surface-900"
             >
-              <i [class]="'pi ' + account.icon + ' text-xl'"></i>
-            </div>
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center gap-2">
-                <h2 class="truncate font-medium">{{ account.name }}</h2>
-                @if (account.isDefault) {
-                  <p-tag value="Default" severity="info" />
-                }
+              <div
+                class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
+              >
+                <i [class]="'pi ' + account.icon + ' text-xl'"></i>
               </div>
-              <p class="mt-1 text-sm text-muted-color tabular-nums">ID {{ account.cardId }}</p>
-              <p class="mt-1 text-lg font-semibold tabular-nums">
-                {{ formatBalance(account.balance, account.currency) }}
-              </p>
-            </div>
-            <div class="flex shrink-0 gap-1">
-              <p-button
-                icon="pi pi-pencil"
-                [rounded]="true"
-                [text]="true"
-                severity="secondary"
-                ariaLabel="Edit account"
-                (onClick)="openEdit(account)"
-              />
-              <p-button
-                icon="pi pi-trash"
-                [rounded]="true"
-                [text]="true"
-                severity="danger"
-                ariaLabel="Delete account"
-                (onClick)="confirmDelete(account, $event)"
-              />
-            </div>
-          </li>
-        }
-      </ul>
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <h2 class="truncate font-medium">{{ account.name }}</h2>
+                  @if (account.isDefault) {
+                    <p-tag value="Default" severity="info" />
+                  }
+                </div>
+                <p class="mt-1 text-sm text-muted-color tabular-nums">ID {{ account.cardId }}</p>
+                <p class="mt-1 text-lg font-semibold tabular-nums">
+                  {{ formatBalance(account.balance, account.currency) }}
+                </p>
+              </div>
+              <div class="flex shrink-0 gap-1">
+                <p-button
+                  icon="pi pi-pencil"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="secondary"
+                  ariaLabel="Edit account"
+                  (onClick)="openEdit(account)"
+                />
+                <p-button
+                  icon="pi pi-trash"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="danger"
+                  ariaLabel="Remove account"
+                  (onClick)="openDeleteDialog(account)"
+                />
+              </div>
+            </li>
+          }
+        </ul>
+      } @else {
+        <div
+          class="rounded-2xl border border-dashed border-surface-300 bg-surface-0 p-8 text-center dark:border-surface-700 dark:bg-surface-900"
+        >
+          <p class="text-muted-color">No active accounts. Restore one from the archive below.</p>
+          <p-button class="mt-4" label="Add account" icon="pi pi-plus" (onClick)="openCreate()" />
+        </div>
+      }
+
+      @if (archivedAccounts().length > 0) {
+        <div id="archived-accounts" class="mt-8">
+          <h2 class="mb-3 text-sm font-medium text-muted-color">Archived</h2>
+          <ul class="flex flex-col gap-3">
+            @for (account of archivedAccounts(); track account.id) {
+              <li
+                class="flex items-start gap-4 rounded-2xl border border-surface-200 bg-surface-50 p-4 opacity-80 dark:border-surface-800 dark:bg-surface-950"
+              >
+                <div
+                  class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-surface-200 text-muted-color dark:bg-surface-800"
+                >
+                  <i [class]="'pi ' + account.icon + ' text-xl'"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <h2 class="truncate font-medium">{{ account.name }}</h2>
+                    <p-tag value="Archived" severity="secondary" />
+                  </div>
+                  <p class="mt-1 text-sm text-muted-color tabular-nums">ID {{ account.cardId }}</p>
+                  <p class="mt-1 text-lg font-semibold tabular-nums">
+                    {{ formatBalance(account.balance, account.currency) }}
+                  </p>
+                </div>
+                <div class="flex shrink-0 gap-1">
+                  <p-button
+                    icon="pi pi-replay"
+                    [rounded]="true"
+                    [text]="true"
+                    severity="secondary"
+                    ariaLabel="Restore account"
+                    (onClick)="restoreAccount(account)"
+                  />
+                  <p-button
+                    icon="pi pi-trash"
+                    [rounded]="true"
+                    [text]="true"
+                    severity="danger"
+                    ariaLabel="Delete account permanently"
+                    (onClick)="openDeleteDialog(account)"
+                  />
+                </div>
+              </li>
+            }
+          </ul>
+        </div>
+      }
     }
   </section>
 </main>
@@ -211,4 +267,91 @@
   </form>
 </p-dialog>
 
-<p-confirmDialog />
+<p-dialog
+  [header]="deleteDialogTitle()"
+  [modal]="true"
+  [visible]="deleteDialogVisible()"
+  (visibleChange)="deleteDialogVisible.set($event)"
+  [style]="{ width: '100%', maxWidth: '28rem' }"
+  [draggable]="false"
+  (onHide)="closeDeleteDialog()"
+>
+  @if (deletingAccount(); as account) {
+    @if (dialogErrorMessage(); as message) {
+      <p-message severity="error" [text]="message" styleClass="mb-4 w-full" />
+    }
+
+    @if (account.archivedAt) {
+      <p class="text-sm text-muted-color">
+        Delete <span class="font-medium text-color">"{{ account.name }}"</span> permanently?
+        This removes all incomes, outcomes, and transfers linked to this account. This cannot be
+        undone.
+      </p>
+      <div class="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+        <p-button
+          type="button"
+          label="Cancel"
+          severity="secondary"
+          [text]="true"
+          [disabled]="deleting()"
+          (onClick)="closeDeleteDialog()"
+        />
+        <p-button
+          type="button"
+          label="Delete permanently"
+          icon="pi pi-trash"
+          severity="danger"
+          [loading]="deleting()"
+          (onClick)="deletePermanently()"
+        />
+      </div>
+    } @else {
+      <p class="text-sm text-muted-color">
+        What would you like to do with
+        <span class="font-medium text-color">"{{ account.name }}"</span>?
+      </p>
+      <ul class="mt-4 flex flex-col gap-3 text-sm">
+        <li class="rounded-xl border border-surface-200 p-3 dark:border-surface-700">
+          <p class="font-medium">Archive</p>
+          <p class="mt-1 text-muted-color">
+            Hide the account from lists. All incomes, outcomes, and transfers are kept.
+          </p>
+        </li>
+        <li class="rounded-xl border border-red-200 p-3 dark:border-red-900/50">
+          <p class="font-medium text-red-600 dark:text-red-400">Delete permanently</p>
+          <p class="mt-1 text-muted-color">
+            Remove the account and all linked incomes, outcomes, and transfers. This cannot be
+            undone.
+          </p>
+        </li>
+      </ul>
+      <div class="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+        <p-button
+          type="button"
+          label="Cancel"
+          severity="secondary"
+          [text]="true"
+          [disabled]="deleting()"
+          (onClick)="closeDeleteDialog()"
+        />
+        <p-button
+          type="button"
+          label="Archive"
+          icon="pi pi-eye-slash"
+          severity="secondary"
+          [outlined]="true"
+          [loading]="deleting()"
+          (onClick)="archiveAccount()"
+        />
+        <p-button
+          type="button"
+          label="Delete permanently"
+          icon="pi pi-trash"
+          severity="danger"
+          [loading]="deleting()"
+          (onClick)="deletePermanently()"
+        />
+      </div>
+    }
+  }
+</p-dialog>

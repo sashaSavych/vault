@@ -1,9 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { ConfirmationService } from 'primeng/api';
 import { Button } from 'primeng/button';
-import { ConfirmDialog } from 'primeng/confirmdialog';
 import { Dialog } from 'primeng/dialog';
 import { InputNumber } from 'primeng/inputnumber';
 import { InputText } from 'primeng/inputtext';
@@ -18,6 +16,7 @@ import type { Account } from '../../core/models/account';
 import { ACCOUNT_ICONS } from '../../shared/constants/account-icons';
 import { CURRENCIES } from '../../shared/constants/currencies';
 import { formatBalance } from '../../shared/utils/format-balance';
+import { toErrorMessage } from '../../shared/utils/to-error-message';
 
 const DEFAULT_CARD_ID = '0000';
 
@@ -32,7 +31,6 @@ const DEFAULT_CARD_ID = '0000';
     InputNumber,
     Select,
     ToggleSwitch,
-    ConfirmDialog,
     Message,
     Tag,
   ],
@@ -41,24 +39,35 @@ const DEFAULT_CARD_ID = '0000';
 })
 export class Accounts implements OnInit {
   private readonly accountsService = inject(AccountsService);
-  private readonly confirmation = inject(ConfirmationService);
   private readonly fb = inject(FormBuilder);
 
   protected readonly auth = inject(AuthService);
   protected readonly currencies = [...CURRENCIES];
   protected readonly icons = [...ACCOUNT_ICONS];
 
-  protected readonly accounts = signal<Account[]>([]);
+  protected readonly activeAccounts = signal<Account[]>([]);
+  protected readonly archivedAccounts = signal<Account[]>([]);
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
+  protected readonly deleting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly dialogErrorMessage = signal<string | null>(null);
   protected readonly dialogVisible = signal(false);
+  protected readonly deleteDialogVisible = signal(false);
   protected readonly editingId = signal<string | null>(null);
+  protected readonly deletingAccount = signal<Account | null>(null);
 
   protected readonly dialogTitle = computed(() =>
     this.editingId() ? 'Edit account' : 'Add account',
   );
+
+  protected readonly deleteDialogTitle = computed(() => {
+    const account = this.deletingAccount();
+    if (!account) {
+      return 'Remove account';
+    }
+    return account.archivedAt ? 'Delete account permanently' : 'Remove account';
+  });
 
   protected readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(80)]],
@@ -88,7 +97,7 @@ export class Accounts implements OnInit {
       currency: 'UAH',
       icon: 'pi-wallet',
       balance: 0,
-      isDefault: this.accounts().length === 0,
+      isDefault: this.activeAccounts().length === 0,
     });
     this.dialogVisible.set(true);
   }
@@ -111,6 +120,18 @@ export class Accounts implements OnInit {
   protected closeDialog(): void {
     this.dialogVisible.set(false);
     this.editingId.set(null);
+    this.dialogErrorMessage.set(null);
+  }
+
+  protected openDeleteDialog(account: Account): void {
+    this.deletingAccount.set(account);
+    this.dialogErrorMessage.set(null);
+    this.deleteDialogVisible.set(true);
+  }
+
+  protected closeDeleteDialog(): void {
+    this.deleteDialogVisible.set(false);
+    this.deletingAccount.set(null);
     this.dialogErrorMessage.set(null);
   }
 
@@ -151,16 +172,55 @@ export class Accounts implements OnInit {
     }
   }
 
-  protected confirmDelete(account: Account, event: Event): void {
-    this.confirmation.confirm({
-      target: event.target as EventTarget,
-      message: `Delete "${account.name}"? This cannot be undone.`,
-      header: 'Delete account',
-      icon: 'pi pi-exclamation-triangle',
-      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Delete', severity: 'danger' },
-      accept: () => void this.deleteAccount(account.id),
-    });
+  protected async archiveAccount(): Promise<void> {
+    const account = this.deletingAccount();
+    if (!account || account.archivedAt) {
+      return;
+    }
+
+    this.deleting.set(true);
+    this.dialogErrorMessage.set(null);
+
+    try {
+      await this.accountsService.archive(account.id);
+      this.closeDeleteDialog();
+      await this.reload();
+    } catch (error) {
+      this.dialogErrorMessage.set(toErrorMessage(error));
+    } finally {
+      this.deleting.set(false);
+    }
+  }
+
+  protected async deletePermanently(): Promise<void> {
+    const account = this.deletingAccount();
+    if (!account) {
+      return;
+    }
+
+    this.deleting.set(true);
+    this.dialogErrorMessage.set(null);
+
+    try {
+      await this.accountsService.removePermanent(account.id);
+      this.closeDeleteDialog();
+      await this.reload();
+    } catch (error) {
+      this.dialogErrorMessage.set(toErrorMessage(error));
+    } finally {
+      this.deleting.set(false);
+    }
+  }
+
+  protected async restoreAccount(account: Account): Promise<void> {
+    this.errorMessage.set(null);
+
+    try {
+      await this.accountsService.restore(account.id);
+      await this.reload();
+    } catch (error) {
+      this.errorMessage.set(toErrorMessage(error));
+    }
   }
 
   protected showError(controlName: 'name' | 'cardId'): boolean {
@@ -168,35 +228,20 @@ export class Accounts implements OnInit {
     return control.invalid && control.touched;
   }
 
-  private async deleteAccount(id: string): Promise<void> {
-    this.errorMessage.set(null);
-
-    try {
-      await this.accountsService.remove(id);
-      await this.reload();
-    } catch (error) {
-      this.errorMessage.set(toErrorMessage(error));
-    }
-  }
-
   private async reload(): Promise<void> {
     this.loading.set(true);
     this.errorMessage.set(null);
 
     try {
-      this.accounts.set(await this.accountsService.list());
+      const accounts = await this.accountsService.list({ includeArchived: true });
+      this.activeAccounts.set(accounts.filter((account) => !account.archivedAt));
+      this.archivedAccounts.set(accounts.filter((account) => account.archivedAt));
     } catch (error) {
       this.errorMessage.set(toErrorMessage(error));
-      this.accounts.set([]);
+      this.activeAccounts.set([]);
+      this.archivedAccounts.set([]);
     } finally {
       this.loading.set(false);
     }
   }
-}
-
-function toErrorMessage(error: unknown): string {
-  if (error && typeof error === 'object' && 'message' in error) {
-    return String((error as { message: string }).message);
-  }
-  return 'Something went wrong. Please try again.';
 }

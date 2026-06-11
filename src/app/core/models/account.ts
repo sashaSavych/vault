@@ -7,6 +7,7 @@ export interface Account {
   cardId: string;
   balance: number;
   isDefault: boolean;
+  archivedAt: string | null;
   createdAt: string;
 }
 
@@ -28,6 +29,7 @@ export interface AccountRow {
   card_id: string;
   balance: number | string;
   is_default: boolean;
+  archived_at: string | null;
   created_at: string;
 }
 
@@ -41,6 +43,11 @@ export function mapAccount(row: AccountRow): Account {
     cardId: row.card_id ?? '0000',
     balance: Number(row.balance),
     isDefault: row.is_default,
+    archivedAt: row.archived_at ?? null,
     createdAt: row.created_at,
   };
+}
+
+export interface AccountListOptions {
+  includeArchived?: boolean;
 }

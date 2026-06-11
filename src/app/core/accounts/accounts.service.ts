@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 
 import { AuthService } from '../auth/auth.service';
-import type { Account, AccountInput, AccountRow } from '../models/account';
+import type { Account, AccountInput, AccountListOptions, AccountRow } from '../models/account';
 import { mapAccount } from '../models/account';
 import { getSupabaseClient } from '../supabase/supabase';
 
@@ -10,12 +10,18 @@ export class AccountsService {
   private readonly supabase = getSupabaseClient();
   private readonly auth = inject(AuthService);
 
-  async list(): Promise<Account[]> {
-    const { data, error } = await this.supabase
+  async list(options: AccountListOptions = {}): Promise<Account[]> {
+    let query = this.supabase
       .from('accounts')
       .select('*')
       .order('is_default', { ascending: false })
       .order('created_at', { ascending: true });
+
+    if (!options.includeArchived) {
+      query = query.is('archived_at', null);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       throw error;
@@ -53,8 +59,35 @@ export class AccountsService {
     return mapAccount(data as AccountRow);
   }
 
-  async remove(id: string): Promise<void> {
-    const { error } = await this.supabase.from('accounts').delete().eq('id', id);
+  async archive(id: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('accounts')
+      .update({
+        archived_at: new Date().toISOString(),
+        is_default: false,
+      })
+      .eq('id', id);
+
+    if (error) {
+      throw error;
+    }
+  }
+
+  async restore(id: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('accounts')
+      .update({ archived_at: null })
+      .eq('id', id);
+
+    if (error) {
+      throw error;
+    }
+  }
+
+  async removePermanent(id: string): Promise<void> {
+    const { error } = await this.supabase.rpc('delete_account_permanently', {
+      p_account_id: id,
+    });
 
     if (error) {
       throw error;
