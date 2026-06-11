@@ -11,7 +11,7 @@ import type {
   OutcomeRow,
   OutcomeWithDetails,
 } from '../models/outcome';
-import { mapOutcome } from '../models/outcome';
+import { mapOutcome, normalizeOutcomeName } from '../models/outcome';
 import { AuthService } from '../auth/auth.service';
 import { getSupabaseClient } from '../supabase/supabase';
 import { categoryLabel } from '../../shared/utils/category-select-options';
@@ -67,7 +67,7 @@ export class OutcomesService {
       .from('outcomes')
       .insert({
         user_id: this.requireUserId(),
-        name: input.name.trim(),
+        name: normalizeOutcomeName(input.name),
         account_id: input.accountId,
         category_id: input.categoryId,
         amount: input.amount,
@@ -97,7 +97,7 @@ export class OutcomesService {
       .insert(
         inputs.map((input) => ({
           user_id: this.requireUserId(),
-          name: input.name.trim(),
+          name: normalizeOutcomeName(input.name),
           account_id: input.accountId,
           category_id: input.categoryId,
           amount: input.amount,
@@ -120,7 +120,7 @@ export class OutcomesService {
     const { data, error } = await this.supabase
       .from('outcomes')
       .update({
-        name: input.name.trim(),
+        name: normalizeOutcomeName(input.name),
         account_id: input.accountId,
         category_id: input.categoryId,
         amount: input.amount,

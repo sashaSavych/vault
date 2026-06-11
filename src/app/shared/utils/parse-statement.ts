@@ -1,6 +1,6 @@
 import type { Account } from '../../core/models/account';
 import type { Category } from '../../core/models/category';
-import type { OutcomeInput } from '../../core/models/outcome';
+import { normalizeOutcomeName, type OutcomeInput } from '../../core/models/outcome';
 import { accountMatchesCardLast4 } from './account-card-ids';
 import { categoryLabel } from './category-select-options';
 
@@ -218,7 +218,7 @@ export function buildOutcomeImports(
     }
 
     return {
-      name: row.name.trim() || 'Outcome',
+      name: normalizeOutcomeName(row.name),
       accountId: account?.id ?? '',
       categoryId,
       amount: row.transactionAmount,

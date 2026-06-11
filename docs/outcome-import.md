@@ -25,7 +25,7 @@ Flow:
    - Look up bank category in `category_mappings` table (per user).
    - If missing, try exact match to a Vault outcome category name.
    - If still missing, call Gemini and save new row to `category_mappings`.
-3. Unmapped values fall back to "Other" when it exists.
+3. Import **fails** if category matching is unavailable (missing `chatAiEndpoint`, Gemini errors, or empty mapping). No silent fallback to Other.
 4. Rows still mapped to **Other** after bank-category analysis are re-matched using **Опис операції** (item name): saved `category_mappings`, exact category name, then substring match.
 
 Database: run `supabase/migrations/category-mapping.sql` (when using edge-function matching).

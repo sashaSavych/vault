@@ -1,3 +1,5 @@
+export const OUTCOME_NAME_MAX_LENGTH = 80;
+
 export interface Outcome {
   id: string;
   userId: string;
@@ -39,6 +41,14 @@ export interface OutcomeListFilters {
   categoryId?: string;
   dateFrom?: string;
   dateTo?: string;
+}
+
+export function normalizeOutcomeName(name: string): string {
+  const trimmed = name.trim();
+  const value = trimmed || 'Outcome';
+  return value.length > OUTCOME_NAME_MAX_LENGTH
+    ? value.slice(0, OUTCOME_NAME_MAX_LENGTH)
+    : value;
 }
 
 export function mapOutcome(row: OutcomeRow): Outcome {

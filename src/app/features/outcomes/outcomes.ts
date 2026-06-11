@@ -11,7 +11,6 @@ import { InputText } from 'primeng/inputtext';
 import { Message } from 'primeng/message';
 import { Select } from 'primeng/select';
 
-import { environment } from '../../../environments/environment';
 import { AccountsService } from '../../core/accounts/accounts.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { CategoryMappingsService } from '../../core/categories/category-mappings.service';
@@ -19,12 +18,13 @@ import { CategoryMatchService } from '../../core/categories/category-match.servi
 import { CategoriesService } from '../../core/categories/categories.service';
 import type { Account } from '../../core/models/account';
 import type { Category } from '../../core/models/category';
-import type { OutcomeWithDetails } from '../../core/models/outcome';
+import {
+  OUTCOME_NAME_MAX_LENGTH,
+  type OutcomeWithDetails,
+} from '../../core/models/outcome';
 import { OutcomesService } from '../../core/outcomes/outcomes.service';
 import {
   buildOutcomeImports,
-  extractBankCategories,
-  fallbackCategoryMapping,
   gridToStatementText,
   isImportSavable,
   parseStatementGrid,
@@ -81,6 +81,7 @@ export class Outcomes implements OnInit {
   protected readonly auth = inject(AuthService);
   protected readonly formatBalance = formatBalance;
   protected readonly formatDate = formatDate;
+  protected readonly outcomeNameMaxLength = OUTCOME_NAME_MAX_LENGTH;
 
   protected readonly accounts = signal<Account[]>([]);
   protected readonly categories = signal<Category[]>([]);
@@ -106,7 +107,7 @@ export class Outcomes implements OnInit {
   protected readonly filterDateTo = signal<Date | null>(null);
 
   protected readonly form = this.fb.nonNullable.group({
-    name: ['Outcome', [Validators.required, Validators.maxLength(80)]],
+    name: ['Outcome', [Validators.required, Validators.maxLength(OUTCOME_NAME_MAX_LENGTH)]],
     amount: [0, [Validators.required, Validators.min(0.01)]],
     date: [new Date(), Validators.required],
     categoryId: ['', Validators.required],
@@ -223,30 +224,23 @@ export class Outcomes implements OnInit {
     try {
       const grid = await readStatementXlsx(file);
       const rows = parseStatementGrid(grid);
-      const bankCategories = extractBankCategories(rows);
       const statementText = gridToStatementText(grid);
-      let categoryMapping: Record<string, string> = {};
-      let matchSource = 'fallback';
 
-      if (environment.chatAiEndpoint?.trim()) {
-        try {
-          const match = await this.categoryMatch.matchFromStatement(statementText);
-          categoryMapping = match.mapping;
-          matchSource = 'edge-function';
-          console.log('Category match:', {
-            model: match.model,
-            fromDb: match.fromDb,
-            fromExact: match.fromExact,
-            fromAi: match.fromAi,
-          });
-        } catch (error) {
-          console.warn('Category match failed, using Other fallback:', error);
-        }
-      }
+      const match = await this.categoryMatch.matchFromStatement(statementText);
+      const categoryMapping = match.mapping;
 
       if (Object.keys(categoryMapping).length === 0) {
-        categoryMapping = fallbackCategoryMapping(bankCategories, this.categories());
+        throw new Error(
+          'Category matching returned no results. Check outcome categories and Gemini configuration.',
+        );
       }
+
+      console.log('Category match:', {
+        model: match.model,
+        fromDb: match.fromDb,
+        fromExact: match.fromExact,
+        fromAi: match.fromAi,
+      });
 
       const storedMappings = await this.categoryMappingsService.listByBankCategory();
 
@@ -273,7 +267,7 @@ export class Outcomes implements OnInit {
 
       console.group('Outcome import');
       console.log('Source:', file.name);
-      console.log('Category mapping source:', matchSource);
+      console.log('Category mapping source:', 'edge-function');
       console.log('Debit rows parsed:', rows.length);
       console.log('Saved to DB:', saved);
       console.log('Skipped:', skipped);

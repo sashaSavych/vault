@@ -264,6 +264,7 @@
         formControlName="name"
         class="w-full"
         autocomplete="off"
+        [maxlength]="outcomeNameMaxLength"
         [invalid]="showError('name')"
       />
       @if (showError('name')) {
