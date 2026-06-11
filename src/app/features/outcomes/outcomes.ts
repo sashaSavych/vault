@@ -30,6 +30,11 @@ import {
   toOutcomeInput,
 } from '../../shared/utils/parse-statement';
 import { readStatementXlsx } from '../../shared/utils/read-xlsx';
+import { AccountSelectLabel } from '../../shared/components/account-select-label/account-select-label';
+import {
+  accountFilterOptions,
+  accountSelectOptions,
+} from '../../shared/utils/account-select-options';
 import { categorySelectOptions } from '../../shared/utils/category-select-options';
 import { formatBalance } from '../../shared/utils/format-balance';
 import { formatDate, parseIsoDate, toIsoDateString } from '../../shared/utils/format-date';
@@ -49,6 +54,7 @@ import { toErrorMessage } from '../../shared/utils/to-error-message';
     DatePicker,
     ConfirmDialog,
     Message,
+    AccountSelectLabel,
   ],
   templateUrl: './outcomes.html',
   styleUrl: './outcomes.scss',
@@ -96,24 +102,13 @@ export class Outcomes implements OnInit {
     accountId: ['', Validators.required],
   });
 
-  protected readonly accountOptions = computed(() => [
-    { label: 'All accounts', value: null as string | null },
-    ...this.accounts().map((a) => ({
-      label: `${a.name} (${a.currency})`,
-      value: a.id,
-    })),
-  ]);
+  protected readonly accountOptions = computed(() => accountFilterOptions(this.accounts()));
 
   protected readonly categoryOptions = computed(() =>
     categorySelectOptions(this.categories()),
   );
 
-  protected readonly formAccountOptions = computed(() =>
-    this.accounts().map((a) => ({
-      label: `${a.name} (${a.currency})`,
-      value: a.id,
-    })),
-  );
+  protected readonly formAccountOptions = computed(() => accountSelectOptions(this.accounts()));
 
   ngOnInit(): void {
     void this.reload();

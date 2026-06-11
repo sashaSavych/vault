@@ -24,6 +24,8 @@ import {
   type OutcomeCategoryReportRow,
   type OutcomeReportCurrencyTotal,
 } from '../../../shared/utils/aggregate-outcomes-by-category';
+import { AccountSelectLabel } from '../../../shared/components/account-select-label/account-select-label';
+import { accountSelectOptions } from '../../../shared/utils/account-select-options';
 import { categorySelectOptions } from '../../../shared/utils/category-select-options';
 import { formatBalance } from '../../../shared/utils/format-balance';
 import { formatDate, parseIsoDate, toIsoDateString } from '../../../shared/utils/format-date';
@@ -48,6 +50,7 @@ interface SelectedCategory {
     InputNumber,
     ConfirmDialog,
     Message,
+    AccountSelectLabel,
   ],
   templateUrl: './outcomes-by-category.html',
   styleUrl: './outcomes-by-category.scss',
@@ -96,12 +99,7 @@ export class OutcomesByCategoryReport implements OnInit {
     categorySelectOptions(this.categories()),
   );
 
-  protected readonly formAccountOptions = computed(() =>
-    this.accounts().map((account) => ({
-      label: `${account.name} (${account.currency})`,
-      value: account.id,
-    })),
-  );
+  protected readonly formAccountOptions = computed(() => accountSelectOptions(this.accounts()));
 
   protected readonly form = this.fb.nonNullable.group({
     name: ['Outcome', [Validators.required, Validators.maxLength(80)]],

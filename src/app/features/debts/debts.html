@@ -217,7 +217,16 @@
         optionValue="value"
         appendTo="body"
         styleClass="w-full"
-      />
+      >
+        <ng-template #selectedItem let-selected>
+          @if (selected) {
+            <app-account-select-label [icon]="selected.icon" [label]="selected.label" />
+          }
+        </ng-template>
+        <ng-template #item let-option>
+          <app-account-select-label [icon]="option.icon" [label]="option.label" />
+        </ng-template>
+      </p-select>
       @if (accountBalance(debtForm.controls.accountId.value); as balance) {
         <small class="text-muted-color"
           >Balance:
@@ -325,7 +334,16 @@
         optionValue="value"
         appendTo="body"
         styleClass="w-full"
-      />
+      >
+        <ng-template #selectedItem let-selected>
+          @if (selected) {
+            <app-account-select-label [icon]="selected.icon" [label]="selected.label" />
+          }
+        </ng-template>
+        <ng-template #item let-option>
+          <app-account-select-label [icon]="option.icon" [label]="option.label" />
+        </ng-template>
+      </p-select>
       @if (accountBalance(operationForm.controls.accountId.value); as balance) {
         <small class="text-muted-color"
           >Balance:

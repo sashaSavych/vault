@@ -29,6 +29,8 @@ import {
   debtTypeColorClass,
   debtTypeLabel,
 } from '../../shared/constants/debt-types';
+import { AccountSelectLabel } from '../../shared/components/account-select-label/account-select-label';
+import { accountSelectOptions } from '../../shared/utils/account-select-options';
 import { formatBalance } from '../../shared/utils/format-balance';
 import { formatDate, parseIsoDate, toIsoDateString } from '../../shared/utils/format-date';
 import { toErrorMessage } from '../../shared/utils/to-error-message';
@@ -48,6 +50,7 @@ import { toErrorMessage } from '../../shared/utils/to-error-message';
     ConfirmDialog,
     Message,
     Tag,
+    AccountSelectLabel,
   ],
   templateUrl: './debts.html',
   styleUrl: './debts.scss',
@@ -87,12 +90,7 @@ export class Debts implements OnInit {
     return `${debtOperationTypeLabel(this.operationType())} — ${debt.name}`;
   });
 
-  protected readonly formAccountOptions = computed(() =>
-    this.accounts().map((account) => ({
-      label: `${account.name} (${account.currency})`,
-      value: account.id,
-    })),
-  );
+  protected readonly formAccountOptions = computed(() => accountSelectOptions(this.accounts()));
 
   protected readonly debtForm = this.fb.nonNullable.group({
     name: ['Debt', [Validators.required, Validators.maxLength(80)]],

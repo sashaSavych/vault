@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
@@ -16,6 +16,8 @@ import { AuthService } from '../../core/auth/auth.service';
 import type { Account } from '../../core/models/account';
 import type { TransferWithAccounts } from '../../core/models/transfer';
 import { TransfersService } from '../../core/transfers/transfers.service';
+import { AccountSelectLabel } from '../../shared/components/account-select-label/account-select-label';
+import { accountSelectOptions } from '../../shared/utils/account-select-options';
 import { formatBalance } from '../../shared/utils/format-balance';
 import { formatDate, toIsoDateString } from '../../shared/utils/format-date';
 import { toErrorMessage } from '../../shared/utils/to-error-message';
@@ -33,6 +35,7 @@ import { toErrorMessage } from '../../shared/utils/to-error-message';
     DatePicker,
     ConfirmDialog,
     Message,
+    AccountSelectLabel,
   ],
   templateUrl: './transfers.html',
   styleUrl: './transfers.scss',
@@ -67,11 +70,7 @@ export class Transfers implements OnInit {
     date: [new Date(), Validators.required],
   });
 
-  protected readonly accountOptions = () =>
-    this.accounts().map((a) => ({
-      label: `${a.name} (${a.currency})`,
-      value: a.id,
-    }));
+  protected readonly accountOptions = computed(() => accountSelectOptions(this.accounts()));
 
   ngOnInit(): void {
     void this.reload();
