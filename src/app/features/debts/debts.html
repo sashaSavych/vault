@@ -1,16 +1,42 @@
 <main class="flex min-h-screen flex-col p-4 sm:p-8">
   <header class="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-4">
-    <div>
-      <h1 class="text-2xl font-semibold text-primary">Debts</h1>
-      <p class="text-sm text-muted-color">Track money you borrow and lend</p>
+    <div class="flex items-center gap-3">
+      @if (selectedDebt()) {
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-full text-muted-color hover:bg-surface-100 dark:hover:bg-surface-800"
+          aria-label="Back to debts list"
+          (click)="closeDebtDetail()"
+        >
+          <i class="pi pi-arrow-left"></i>
+        </button>
+      }
+      <div>
+        <h1 class="text-2xl font-semibold text-primary">
+          @if (selectedDebt(); as debt) {
+            {{ debt.name }}
+          } @else {
+            Debts
+          }
+        </h1>
+        <p class="text-sm text-muted-color">
+          @if (selectedDebt(); as debt) {
+            {{ debtTypeLabel(debt.type) }} · {{ formatDate(debt.date) }}
+          } @else {
+            Track money you borrow and lend
+          }
+        </p>
+      </div>
     </div>
     <div class="flex gap-2">
-      <p-button
-        label="Create"
-        icon="pi pi-plus"
-        (onClick)="openCreate()"
-        [disabled]="accounts().length === 0"
-      />
+      @if (!selectedDebt()) {
+        <p-button
+          label="Create"
+          icon="pi pi-plus"
+          (onClick)="openCreate()"
+          [disabled]="accounts().length === 0"
+        />
+      }
       <p-button
         label="Sign out"
         icon="pi pi-sign-out"
@@ -54,123 +80,127 @@
         </p>
         <p-button class="mt-6" label="Create" icon="pi pi-plus" (onClick)="openCreate()" />
       </div>
-    } @else {
-      <ul class="flex flex-col gap-3">
-        @for (debt of debts(); track debt.id) {
-          <li
-            class="rounded-2xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-800 dark:bg-surface-900"
+    } @else if (selectedDebt(); as debt) {
+      <div
+        class="rounded-2xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-800 dark:bg-surface-900"
+      >
+        <div class="flex flex-wrap items-center gap-2">
+          <span
+            class="rounded-full px-2 py-0.5 text-xs font-medium"
+            [class]="debtTypeBadgeClass(debt.type)"
           >
-            <div class="flex items-start justify-between gap-3">
-              <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-2">
-                  <h2 class="font-medium">{{ debt.name }}</h2>
-                  <span
-                    class="rounded-full px-2 py-0.5 text-xs font-medium"
-                    [class]="debtTypeBadgeClass(debt.type)"
-                  >
-                    {{ debtTypeLabel(debt.type) }}
-                  </span>
-                  @if (debt.balance <= 0) {
-                    <p-tag value="Settled" severity="success" />
+            {{ debtTypeLabel(debt.type) }}
+          </span>
+        </div>
+        <p class="mt-3 text-2xl font-semibold tabular-nums" [class]="debtTypeColorClass(debt.type)">
+          {{ formatBalance(debt.balance, debt.accountCurrency) }}
+        </p>
+        <p class="mt-2 text-sm text-muted-color">
+          Account: <span class="font-medium text-color">{{ debt.accountName }}</span>
+        </p>
+        <p class="mt-1 text-sm text-muted-color">
+          Original: {{ formatBalance(debt.amount, debt.accountCurrency) }}
+        </p>
+
+        <div class="mt-4 flex flex-wrap gap-2">
+          <p-button
+            label="Repay"
+            icon="pi pi-arrow-down-left"
+            severity="success"
+            [disabled]="debt.balance <= 0"
+            (onClick)="openOperation('repay')"
+          />
+          <p-button
+            label="Increase"
+            icon="pi pi-arrow-up-right"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="openOperation('increase')"
+          />
+          <p-button
+            label="Delete"
+            icon="pi pi-trash"
+            severity="danger"
+            [outlined]="true"
+            (onClick)="confirmDeleteDebt($event)"
+          />
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <p class="mb-3 text-sm font-medium text-muted-color">Operations</p>
+        @if (debt.operations.length === 0) {
+          <div
+            class="rounded-2xl border border-dashed border-surface-300 bg-surface-0 p-8 text-center dark:border-surface-700 dark:bg-surface-900"
+          >
+            <p class="text-sm text-muted-color">No repayments or increases yet.</p>
+          </div>
+        } @else {
+          <ul class="flex flex-col gap-2">
+            @for (operation of debt.operations; track operation.id) {
+              <li
+                class="flex items-start justify-between gap-3 rounded-xl border border-surface-200 bg-surface-50 p-3 dark:border-surface-800 dark:bg-surface-950"
+              >
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="font-medium">{{ operation.name }}</span>
+                    <span class="text-xs text-muted-color">
+                      {{ debtOperationTypeLabel(operation.type) }}
+                    </span>
+                  </div>
+                  <p class="mt-1 text-sm text-muted-color">
+                    {{ formatDate(operation.date) }} · {{ operation.accountName }}
+                  </p>
+                  @if (operation.notes) {
+                    <p class="mt-1 text-sm text-muted-color">{{ operation.notes }}</p>
                   }
+                  <p
+                    class="mt-2 text-sm font-semibold tabular-nums"
+                    [class]="debtTypeColorClass(debt.type)"
+                  >
+                    {{ formatBalance(operation.amount, operation.accountCurrency) }}
+                  </p>
                 </div>
-                <p class="mt-1 text-sm text-muted-color">{{ formatDate(debt.date) }}</p>
-                <p class="mt-2 text-sm">
-                  <span class="text-muted-color">Account:</span>
-                  <span class="font-medium">{{ debt.accountName }}</span>
-                </p>
-                <p class="mt-2 text-sm">
-                  <span class="text-muted-color">Outstanding:</span>
-                  <span class="font-semibold tabular-nums" [class]="debtTypeColorClass(debt.type)">
-                    {{ formatBalance(debt.balance, debt.accountCurrency) }}
-                  </span>
-                  <span class="text-muted-color">
-                    / {{ formatBalance(debt.amount, debt.accountCurrency) }}
-                  </span>
-                </p>
-              </div>
-              <div class="flex shrink-0 flex-col gap-1 sm:flex-row">
-                <p-button
-                  icon="pi pi-arrow-down-left"
-                  [rounded]="true"
-                  [text]="true"
-                  severity="success"
-                  ariaLabel="Repay"
-                  [disabled]="debt.balance <= 0"
-                  (onClick)="openOperation(debt, 'repay')"
-                />
-                <p-button
-                  icon="pi pi-arrow-up-right"
-                  [rounded]="true"
-                  [text]="true"
-                  severity="secondary"
-                  ariaLabel="Increase"
-                  (onClick)="openOperation(debt, 'increase')"
-                />
-                <p-button
-                  [icon]="isExpanded(debt.id) ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
-                  [rounded]="true"
-                  [text]="true"
-                  severity="secondary"
-                  [ariaLabel]="isExpanded(debt.id) ? 'Hide operations' : 'Show operations'"
-                  (onClick)="toggleExpanded(debt.id)"
-                />
                 <p-button
                   icon="pi pi-trash"
                   [rounded]="true"
                   [text]="true"
                   severity="danger"
-                  ariaLabel="Delete debt"
-                  (onClick)="confirmDeleteDebt(debt, $event)"
+                  ariaLabel="Delete operation"
+                  (onClick)="confirmDeleteOperation(operation.id, operation.name, $event)"
                 />
-              </div>
-            </div>
-
-            @if (isExpanded(debt.id)) {
-              <div class="mt-4 border-t border-surface-200 pt-4 dark:border-surface-800">
-                <p class="mb-3 text-sm font-medium text-muted-color">Operations</p>
-                @if (debt.operations.length === 0) {
-                  <p class="text-sm text-muted-color">No repayments or increases yet.</p>
-                } @else {
-                  <ul class="flex flex-col gap-2">
-                    @for (operation of debt.operations; track operation.id) {
-                      <li
-                        class="flex items-start justify-between gap-3 rounded-xl border border-surface-200 bg-surface-50 p-3 dark:border-surface-800 dark:bg-surface-950"
-                      >
-                        <div class="min-w-0 flex-1">
-                          <div class="flex flex-wrap items-center gap-2">
-                            <span class="font-medium">{{ operation.name }}</span>
-                            <span class="text-xs text-muted-color">
-                              {{ debtOperationTypeLabel(operation.type) }}
-                            </span>
-                          </div>
-                          <p class="mt-1 text-sm text-muted-color">
-                            {{ formatDate(operation.date) }} · {{ operation.accountName }}
-                          </p>
-                          @if (operation.notes) {
-                            <p class="mt-1 text-sm text-muted-color">{{ operation.notes }}</p>
-                          }
-                          <p
-                            class="mt-2 text-sm font-semibold tabular-nums"
-                            [class]="debtTypeColorClass(debt.type)"
-                          >
-                            {{ formatBalance(operation.amount, operation.accountCurrency) }}
-                          </p>
-                        </div>
-                        <p-button
-                          icon="pi pi-trash"
-                          [rounded]="true"
-                          [text]="true"
-                          severity="danger"
-                          ariaLabel="Delete operation"
-                          (onClick)="confirmDeleteOperation(debt, operation.id, operation.name, $event)"
-                        />
-                      </li>
-                    }
-                  </ul>
-                }
-              </div>
+              </li>
             }
+          </ul>
+        }
+      </div>
+    } @else {
+      <ul class="flex flex-col gap-3">
+        @for (debt of debts(); track debt.id) {
+          <li>
+            <button
+              type="button"
+              class="w-full rounded-2xl border border-surface-200 bg-surface-0 p-4 text-left transition-colors hover:border-primary/30 dark:border-surface-800 dark:bg-surface-900"
+              (click)="openDebt(debt)"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <h2 class="font-medium">{{ debt.name }}</h2>
+                    <span
+                      class="rounded-full px-2 py-0.5 text-xs font-medium"
+                      [class]="debtTypeBadgeClass(debt.type)"
+                    >
+                      {{ debtTypeLabel(debt.type) }}
+                    </span>
+                  </div>
+                  <p class="mt-1 font-semibold tabular-nums" [class]="debtTypeColorClass(debt.type)">
+                    {{ formatBalance(debt.balance, debt.accountCurrency) }}
+                  </p>
+                </div>
+                <i class="pi pi-chevron-right shrink-0 text-muted-color"></i>
+              </div>
+            </button>
           </li>
         }
       </ul>

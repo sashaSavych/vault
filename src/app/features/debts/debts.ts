@@ -10,7 +10,6 @@ import { InputNumber } from 'primeng/inputnumber';
 import { InputText } from 'primeng/inputtext';
 import { Message } from 'primeng/message';
 import { Select } from 'primeng/select';
-import { Tag } from 'primeng/tag';
 import { Textarea } from 'primeng/textarea';
 
 import { AccountsService } from '../../core/accounts/accounts.service';
@@ -53,7 +52,6 @@ import { toErrorMessage } from '../../shared/utils/to-error-message';
     DatePicker,
     ConfirmDialog,
     Message,
-    Tag,
     AccountSelectLabel,
   ],
   templateUrl: './debts.html',
@@ -82,9 +80,9 @@ export class Debts implements OnInit {
   protected readonly dialogErrorMessage = signal<string | null>(null);
   protected readonly debtDialogVisible = signal(false);
   protected readonly operationDialogVisible = signal(false);
+  protected readonly selectedDebt = signal<DebtWithDetails | null>(null);
   protected readonly operationDebt = signal<DebtWithDetails | null>(null);
   protected readonly operationType = signal<DebtOperationType>('repay');
-  protected readonly expandedDebtIds = signal<Set<string>>(new Set());
 
   protected readonly operationDialogTitle = computed(() => {
     const debt = this.operationDebt();
@@ -124,18 +122,13 @@ export class Debts implements OnInit {
     return formatBalance(account.balance, account.currency);
   }
 
-  protected isExpanded(debtId: string): boolean {
-    return this.expandedDebtIds().has(debtId);
+  protected openDebt(debt: DebtWithDetails): void {
+    this.selectedDebt.set(debt);
+    this.errorMessage.set(null);
   }
 
-  protected toggleExpanded(debtId: string): void {
-    const next = new Set(this.expandedDebtIds());
-    if (next.has(debtId)) {
-      next.delete(debtId);
-    } else {
-      next.add(debtId);
-    }
-    this.expandedDebtIds.set(next);
+  protected closeDebtDetail(): void {
+    this.selectedDebt.set(null);
   }
 
   protected openCreate(): void {
@@ -163,7 +156,12 @@ export class Debts implements OnInit {
     this.dialogErrorMessage.set(null);
   }
 
-  protected openOperation(debt: DebtWithDetails, type: DebtOperationType): void {
+  protected openOperation(type: DebtOperationType): void {
+    const debt = this.selectedDebt();
+    if (!debt) {
+      return;
+    }
+
     this.operationDebt.set(debt);
     this.operationType.set(type);
     this.dialogErrorMessage.set(null);
@@ -304,7 +302,8 @@ export class Debts implements OnInit {
         type: this.operationType(),
       });
       this.closeOperationDialog();
-      await this.reload();
+      await this.refreshAfterChange();
+      await this.accountsService.list().then((accounts) => this.accounts.set(accounts));
     } catch (error) {
       this.dialogErrorMessage.set(toErrorMessage(error));
     } finally {
@@ -312,7 +311,12 @@ export class Debts implements OnInit {
     }
   }
 
-  protected confirmDeleteDebt(debt: DebtWithDetails, event: Event): void {
+  protected confirmDeleteDebt(event: Event): void {
+    const debt = this.selectedDebt();
+    if (!debt) {
+      return;
+    }
+
     this.confirmation.confirm({
       target: event.target as EventTarget,
       message: `Delete "${debt.name}" and all its operations? Account balances will be adjusted.`,
@@ -325,11 +329,15 @@ export class Debts implements OnInit {
   }
 
   protected confirmDeleteOperation(
-    debt: DebtWithDetails,
     operationId: string,
     operationName: string,
     event: Event,
   ): void {
+    const debt = this.selectedDebt();
+    if (!debt) {
+      return;
+    }
+
     this.confirmation.confirm({
       target: event.target as EventTarget,
       message: `Delete "${operationName}"? The account balance will be adjusted.`,
@@ -337,7 +345,7 @@ export class Debts implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
       acceptButtonProps: { label: 'Delete', severity: 'danger' },
-      accept: () => void this.deleteOperation(debt.id, operationId),
+      accept: () => void this.deleteOperation(operationId),
     });
   }
 
@@ -356,24 +364,39 @@ export class Debts implements OnInit {
 
     try {
       await this.debtsService.remove(id);
+      this.closeDebtDetail();
       await this.reload();
     } catch (error) {
       this.errorMessage.set(toErrorMessage(error));
     }
   }
 
-  private async deleteOperation(debtId: string, operationId: string): Promise<void> {
+  private async deleteOperation(operationId: string): Promise<void> {
     this.errorMessage.set(null);
 
     try {
       await this.debtsService.removeOperation(operationId);
-      const expanded = new Set(this.expandedDebtIds());
-      expanded.add(debtId);
-      this.expandedDebtIds.set(expanded);
-      await this.reload();
+      await this.refreshAfterChange();
     } catch (error) {
       this.errorMessage.set(toErrorMessage(error));
     }
+  }
+
+  private async refreshAfterChange(): Promise<void> {
+    await this.reloadDebts();
+
+    const selected = this.selectedDebt();
+    if (!selected) {
+      return;
+    }
+
+    const updated = this.debts().find((debt) => debt.id === selected.id);
+    if (!updated) {
+      this.closeDebtDetail();
+      return;
+    }
+
+    this.selectedDebt.set(updated);
   }
 
   private async reload(): Promise<void> {
