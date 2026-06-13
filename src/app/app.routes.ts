@@ -5,6 +5,7 @@ import { Accounts } from './features/accounts/accounts';
 import { Categories } from './features/categories/categories';
 import { Debts } from './features/debts/debts';
 import { Incomes } from './features/incomes/incomes';
+import { More } from './features/more/more';
 import { Outcomes } from './features/outcomes/outcomes';
 import { IncomesByCategoryReport } from './features/reports/incomes-by-category/incomes-by-category';
 import { OutcomesByCategoryReport } from './features/reports/outcomes-by-category/outcomes-by-category';
@@ -17,7 +18,7 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'accounts',
+    redirectTo: 'outcomes',
   },
   {
     path: 'accounts',
@@ -50,6 +51,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'more',
+    component: More,
+    canActivate: [authGuard],
+  },
+  {
     path: 'reports',
     component: Reports,
     canActivate: [authGuard],
@@ -76,6 +82,8 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: 'accounts',
+    redirectTo: 'outcomes',
   },
 ];
+
+

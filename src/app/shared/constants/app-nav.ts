@@ -5,11 +5,15 @@ export interface NavPage {
 }
 
 export const APP_NAV_PAGES: NavPage[] = [
+  { path: '/outcomes', label: 'Outcomes', icon: 'pi-minus-circle' },
+  { path: '/incomes', label: 'Incomes', icon: 'pi-plus-circle' },
+  { path: '/transfers', label: 'Transfers', icon: 'pi-arrow-right-arrow-left' },
+  { path: '/more', label: 'More', icon: 'pi-ellipsis-h' },
+];
+
+export const MORE_NAV_PAGES: NavPage[] = [
   { path: '/accounts', label: 'Accounts', icon: 'pi-wallet' },
   { path: '/categories', label: 'Categories', icon: 'pi-tags' },
-  { path: '/incomes', label: 'Incomes', icon: 'pi-plus-circle' },
-  { path: '/outcomes', label: 'Outcomes', icon: 'pi-minus-circle' },
-  { path: '/transfers', label: 'Transfers', icon: 'pi-arrow-right-arrow-left' },
   { path: '/debts', label: 'Debts', icon: 'pi-book' },
   { path: '/reports', label: 'Reports', icon: 'pi-chart-bar' },
 ];
