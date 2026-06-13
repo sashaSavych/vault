@@ -31,18 +31,12 @@
     <div class="flex gap-2">
       @if (!selectedDebt()) {
         <p-button
-          label="Create"
           icon="pi pi-plus"
+          ariaLabel="Create"
           (onClick)="openCreate()"
           [disabled]="accounts().length === 0"
         />
       }
-      <p-button
-        [label]="auth.userDisplayName()"
-        icon="pi pi-sign-out"
-        severity="secondary"
-        (onClick)="auth.signOut()"
-      />
     </div>
   </header>
 
@@ -66,7 +60,7 @@
         <h2 class="mt-4 text-lg font-medium">Need at least one account</h2>
         <p class="mt-2 max-w-sm text-muted-color">Create an account to record debts.</p>
         <a routerLink="/accounts" class="mt-6 no-underline">
-          <p-button label="Go to accounts" icon="pi pi-wallet" />
+          <p-button icon="pi pi-wallet" ariaLabel="Go to accounts" />
         </a>
       </div>
     } @else if (debts().length === 0) {
@@ -78,7 +72,6 @@
         <p class="mt-2 max-w-sm text-muted-color">
           Record money you borrowed or lent, then repay or increase over time.
         </p>
-        <p-button class="mt-6" label="Create" icon="pi pi-plus" (onClick)="openCreate()" />
       </div>
     } @else if (selectedDebt(); as debt) {
       <div
@@ -104,22 +97,22 @@
 
         <div class="mt-4 flex flex-wrap gap-2">
           <p-button
-            label="Repay"
             icon="pi pi-arrow-down-left"
+            ariaLabel="Repay"
             severity="success"
             [disabled]="debt.balance <= 0"
             (onClick)="openOperation('repay')"
           />
           <p-button
-            label="Increase"
             icon="pi pi-arrow-up-right"
+            ariaLabel="Increase"
             severity="secondary"
             [outlined]="true"
             (onClick)="openOperation('increase')"
           />
           <p-button
-            label="Delete"
             icon="pi pi-trash"
+            ariaLabel="Delete"
             severity="danger"
             [outlined]="true"
             (onClick)="confirmDeleteDebt($event)"

@@ -2,7 +2,7 @@
   <header class="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-4">
     <div>
       <h1 class="text-2xl font-semibold text-primary">Outcomes</h1>
-      <p class="text-sm text-muted-color">Record expenses from your accounts</p>
+      <p class="text-sm text-muted-color">Record expenses</p>
     </div>
     <div class="flex gap-2">
       <input
@@ -13,8 +13,8 @@
         (change)="onImportFileSelected($event)"
       />
       <p-button
-        label="Import"
         icon="pi pi-upload"
+        ariaLabel="Import"
         severity="secondary"
         [outlined]="true"
         (onClick)="openImportPicker()"
@@ -22,16 +22,10 @@
         [disabled]="accounts().length === 0 || categories().length === 0"
       />
       <p-button
-        label="Create"
         icon="pi pi-plus"
+        ariaLabel="Create"
         (onClick)="openCreate()"
         [disabled]="accounts().length === 0 || categories().length === 0"
-      />
-      <p-button
-        [label]="auth.userDisplayName()"
-        icon="pi pi-sign-out"
-        severity="secondary"
-        (onClick)="auth.signOut()"
       />
     </div>
   </header>
@@ -135,10 +129,10 @@
           </div>
         </div>
         <div class="flex flex-wrap gap-2">
-          <p-button label="Apply" icon="pi pi-filter" (onClick)="applyFilters()" />
+          <p-button icon="pi pi-filter" ariaLabel="Apply filters" (onClick)="applyFilters()" />
           <p-button
-            label="Clear"
             icon="pi pi-filter-slash"
+            ariaLabel="Clear filters"
             severity="secondary"
             [outlined]="true"
             (onClick)="clearFilters()"
@@ -166,7 +160,7 @@
           Create an account to record expenses.
         </p>
         <a routerLink="/accounts" class="mt-6 no-underline">
-          <p-button label="Go to accounts" icon="pi pi-wallet" />
+          <p-button icon="pi pi-wallet" ariaLabel="Go to accounts" />
         </a>
       </div>
     } @else if (categories().length === 0) {
@@ -179,7 +173,7 @@
           Add outcome categories to classify expenses.
         </p>
         <a routerLink="/categories" class="mt-6 no-underline">
-          <p-button label="Go to categories" icon="pi pi-tags" />
+          <p-button icon="pi pi-tags" ariaLabel="Go to categories" />
         </a>
       </div>
     } @else if (outcomes().length === 0) {
@@ -191,7 +185,6 @@
         <p class="mt-2 max-w-sm text-muted-color">
           Record an expense to debit an account balance.
         </p>
-        <p-button class="mt-6" label="Create" icon="pi pi-plus" (onClick)="openCreate()" />
       </div>
     } @else {
       <ul class="flex flex-col gap-3">

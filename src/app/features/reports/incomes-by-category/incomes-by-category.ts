@@ -12,7 +12,6 @@ import { Message } from 'primeng/message';
 import { Select } from 'primeng/select';
 
 import { AccountsService } from '../../../core/accounts/accounts.service';
-import { AuthService } from '../../../core/auth/auth.service';
 import { CategoriesService } from '../../../core/categories/categories.service';
 import { IncomesService } from '../../../core/incomes/incomes.service';
 import type { Account } from '../../../core/models/account';
@@ -69,7 +68,6 @@ export class IncomesByCategoryReport implements OnInit {
   private readonly confirmation = inject(ConfirmationService);
   private readonly fb = inject(FormBuilder);
 
-  protected readonly auth = inject(AuthService);
   protected readonly formatBalance = formatBalance;
   protected readonly formatDate = formatDate;
   protected readonly formatPercentOfTotal = formatPercentOfTotal;

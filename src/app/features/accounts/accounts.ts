@@ -17,7 +17,6 @@ import { Tag } from 'primeng/tag';
 import { ToggleSwitch } from 'primeng/toggleswitch';
 
 import { AccountsService } from '../../core/accounts/accounts.service';
-import { AuthService } from '../../core/auth/auth.service';
 import type { Account } from '../../core/models/account';
 import {
   ACCOUNT_TYPES,
@@ -67,7 +66,6 @@ export class Accounts implements OnInit {
   private readonly accountsService = inject(AccountsService);
   private readonly fb = inject(FormBuilder);
 
-  protected readonly auth = inject(AuthService);
   protected readonly currencies = [...CURRENCIES];
   protected readonly types = [...ACCOUNT_TYPES];
   protected readonly accountTypeClasses = accountTypeClasses;

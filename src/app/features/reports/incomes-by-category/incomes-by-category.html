@@ -36,12 +36,6 @@
         </p>
       </div>
     </div>
-    <p-button
-      [label]="auth.userDisplayName()"
-      icon="pi pi-sign-out"
-      severity="secondary"
-      (onClick)="auth.signOut()"
-    />
   </header>
 
   <section id="report-content" class="mx-auto mt-8 w-full max-w-3xl">
@@ -118,10 +112,10 @@
           </div>
         </div>
         <div class="flex flex-wrap gap-2">
-          <p-button label="Apply" icon="pi pi-filter" (onClick)="applyFilters()" />
+          <p-button icon="pi pi-filter" ariaLabel="Apply filters" (onClick)="applyFilters()" />
           <p-button
-            label="Clear"
             icon="pi pi-filter-slash"
+            ariaLabel="Clear filters"
             severity="secondary"
             [outlined]="true"
             (onClick)="clearFilters()"
@@ -151,8 +145,8 @@
           </p>
           <p-button
             class="mt-6"
-            label="Back to summary"
             icon="pi pi-arrow-left"
+            ariaLabel="Back to summary"
             severity="secondary"
             (onClick)="closeCategoryDetail()"
           />

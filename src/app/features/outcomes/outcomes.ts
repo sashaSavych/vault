@@ -12,7 +12,6 @@ import { Message } from 'primeng/message';
 import { Select } from 'primeng/select';
 
 import { AccountsService } from '../../core/accounts/accounts.service';
-import { AuthService } from '../../core/auth/auth.service';
 import { CategoryMappingsService } from '../../core/categories/category-mappings.service';
 import { CategoryMatchService } from '../../core/categories/category-match.service';
 import { CategoriesService } from '../../core/categories/categories.service';
@@ -77,7 +76,6 @@ export class Outcomes implements OnInit {
 
   private readonly importInput = viewChild<ElementRef<HTMLInputElement>>('importInput');
 
-  protected readonly auth = inject(AuthService);
   protected readonly formatBalance = formatBalance;
   protected readonly formatDate = formatDate;
   protected readonly outcomeNameMaxLength = OUTCOME_NAME_MAX_LENGTH;

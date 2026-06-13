@@ -13,7 +13,6 @@ import { Select } from 'primeng/select';
 import { Textarea } from 'primeng/textarea';
 
 import { AccountsService } from '../../core/accounts/accounts.service';
-import { AuthService } from '../../core/auth/auth.service';
 import { DebtsService } from '../../core/debts/debts.service';
 import type { Account } from '../../core/models/account';
 import type {
@@ -63,7 +62,6 @@ export class Debts implements OnInit {
   private readonly confirmation = inject(ConfirmationService);
   private readonly fb = inject(FormBuilder);
 
-  protected readonly auth = inject(AuthService);
   protected readonly formatBalance = formatBalance;
   protected readonly formatDate = formatDate;
   protected readonly debtTypeLabel = debtTypeLabel;

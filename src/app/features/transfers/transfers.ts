@@ -12,7 +12,6 @@ import { Message } from 'primeng/message';
 import { Select } from 'primeng/select';
 
 import { AccountsService } from '../../core/accounts/accounts.service';
-import { AuthService } from '../../core/auth/auth.service';
 import type { Account } from '../../core/models/account';
 import type { TransferWithAccounts } from '../../core/models/transfer';
 import { TransfersService } from '../../core/transfers/transfers.service';
@@ -50,7 +49,6 @@ export class Transfers implements OnInit {
   private readonly confirmation = inject(ConfirmationService);
   private readonly fb = inject(FormBuilder);
 
-  protected readonly auth = inject(AuthService);
   protected readonly formatBalance = formatBalance;
   protected readonly formatDate = formatDate;
 

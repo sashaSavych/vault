@@ -9,7 +9,6 @@ import { InputText } from 'primeng/inputtext';
 import { Message } from 'primeng/message';
 import { Select } from 'primeng/select';
 import { CategoriesService } from '../../core/categories/categories.service';
-import { AuthService } from '../../core/auth/auth.service';
 import type { Category, CategoryType } from '../../core/models/category';
 import { CATEGORY_ICONS } from '../../shared/constants/category-icons';
 import { CATEGORY_TYPES } from '../../shared/constants/category-types';
@@ -38,7 +37,6 @@ export class Categories implements OnInit {
   private readonly confirmation = inject(ConfirmationService);
   private readonly fb = inject(FormBuilder);
 
-  protected readonly auth = inject(AuthService);
   protected readonly categoryTypes = [...CATEGORY_TYPES];
   protected readonly icons = [...CATEGORY_ICONS];
 
