@@ -30,7 +30,6 @@ import {
   parseStatementGrid,
   toOutcomeInput,
 } from '../../shared/utils/parse-statement';
-import { readStatementXlsx } from '../../shared/utils/read-xlsx';
 import { AccountSelectLabel } from '../../shared/components/account-select-label/account-select-label';
 import {
   accountFilterOptions,
@@ -222,6 +221,7 @@ export class Outcomes implements OnInit {
     this.successMessage.set(null);
 
     try {
+      const { readStatementXlsx } = await import('../../shared/utils/read-xlsx');
       const grid = await readStatementXlsx(file);
       const rows = parseStatementGrid(grid);
       const statementText = gridToStatementText(grid);

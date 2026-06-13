@@ -1,9 +1,10 @@
-import { Component, input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 
 import { accountTypeClasses } from '../../constants/account-types';
 
 @Component({
   selector: 'app-account-select-label',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex items-center gap-2">
       @if (icon()) {
