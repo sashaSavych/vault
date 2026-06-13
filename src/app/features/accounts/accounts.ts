@@ -84,6 +84,11 @@ export class Accounts implements OnInit {
   protected readonly deleteDialogVisible = signal(false);
   protected readonly editingId = signal<string | null>(null);
   protected readonly deletingAccount = signal<Account | null>(null);
+  // whether current platform is touch-capable — used to set a small drag start delay in template
+  // Initialize synchronously so bindings don't change after the view is checked.
+  protected readonly touchDevice = signal(
+    typeof navigator !== 'undefined' && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window),
+  );
 
   protected readonly dialogTitle = computed(() =>
     this.editingId() ? 'Edit account' : 'Add account',
@@ -128,6 +133,7 @@ export class Accounts implements OnInit {
   ngOnInit(): void {
     void this.reload();
   }
+  protected readonly dragStartDelayMs = computed(() => (this.touchDevice() ? 250 : 0));
 
   protected openCreate(): void {
     this.editingId.set(null);

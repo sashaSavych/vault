@@ -23,3 +23,12 @@
 .category-list-item.cdk-drag-animating {
   transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
 }
+
+/* show grab cursor for draggable cards on desktop */
+.category-list-item {
+  cursor: grab;
+}
+.category-list-item:active {
+  cursor: grabbing;
+}
+

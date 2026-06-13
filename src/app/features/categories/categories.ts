@@ -62,6 +62,11 @@ export class Categories implements OnInit {
   protected readonly dialogVisible = signal(false);
   protected readonly editingId = signal<string | null>(null);
   protected readonly presetParentId = signal<string | null>(null);
+  // Whether the current platform is touch-capable. Used to add a small drag start delay on touch devices.
+  // Initialize synchronously to avoid changing a bound value after Angular checked the view.
+  protected readonly touchDevice = signal(
+    typeof navigator !== 'undefined' && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window),
+  );
 
   protected readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(80)]],
@@ -73,6 +78,9 @@ export class Categories implements OnInit {
   ngOnInit(): void {
     void this.reload();
   }
+  // helper used in templates: how many ms to delay drag start on touch devices.
+  // CDK will ignore short taps and start drag only after this hold period.
+  protected readonly dragStartDelayMs = computed(() => (this.touchDevice() ? 250 : 0));
 
   protected toggleIncomeSection(): void {
     this.incomeExpanded.update((expanded) => !expanded);
