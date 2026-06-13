@@ -1,18 +1,6 @@
 import { Routes } from '@angular/router';
 
 import { authGuard, guestGuard } from './core/auth/auth.guard';
-import { Accounts } from './features/accounts/accounts';
-import { Categories } from './features/categories/categories';
-import { Debts } from './features/debts/debts';
-import { Incomes } from './features/incomes/incomes';
-import { More } from './features/more/more';
-import { Outcomes } from './features/outcomes/outcomes';
-import { IncomesByCategoryReport } from './features/reports/incomes-by-category/incomes-by-category';
-import { OutcomesByCategoryReport } from './features/reports/outcomes-by-category/outcomes-by-category';
-import { Reports } from './features/reports/reports';
-import { Transfers } from './features/transfers/transfers';
-import { Login } from './features/auth/login/login';
-import { Signup } from './features/auth/signup/signup';
 
 export const routes: Routes = [
   {
@@ -22,62 +10,64 @@ export const routes: Routes = [
   },
   {
     path: 'accounts',
-    component: Accounts,
+    loadComponent: () => import('./features/accounts/accounts').then((m) => m.Accounts),
     canActivate: [authGuard],
   },
   {
     path: 'incomes',
-    component: Incomes,
+    loadComponent: () => import('./features/incomes/incomes').then((m) => m.Incomes),
     canActivate: [authGuard],
   },
   {
     path: 'outcomes',
-    component: Outcomes,
+    loadComponent: () => import('./features/outcomes/outcomes').then((m) => m.Outcomes),
     canActivate: [authGuard],
   },
   {
     path: 'transfers',
-    component: Transfers,
+    loadComponent: () => import('./features/transfers/transfers').then((m) => m.Transfers),
     canActivate: [authGuard],
   },
   {
     path: 'debts',
-    component: Debts,
+    loadComponent: () => import('./features/debts/debts').then((m) => m.Debts),
     canActivate: [authGuard],
   },
   {
     path: 'categories',
-    component: Categories,
+    loadComponent: () => import('./features/categories/categories').then((m) => m.Categories),
     canActivate: [authGuard],
   },
   {
     path: 'more',
-    component: More,
+    loadComponent: () => import('./features/more/more').then((m) => m.More),
     canActivate: [authGuard],
   },
   {
     path: 'reports',
-    component: Reports,
+    loadComponent: () => import('./features/reports/reports').then((m) => m.Reports),
     canActivate: [authGuard],
   },
   {
     path: 'reports/outcomes-by-category',
-    component: OutcomesByCategoryReport,
+    loadComponent: () =>
+      import('./features/reports/outcomes-by-category/outcomes-by-category').then((m) => m.OutcomesByCategoryReport),
     canActivate: [authGuard],
   },
   {
     path: 'reports/incomes-by-category',
-    component: IncomesByCategoryReport,
+    loadComponent: () =>
+      import('./features/reports/incomes-by-category/incomes-by-category').then((m) => m.IncomesByCategoryReport),
     canActivate: [authGuard],
   },
   {
     path: 'login',
-    component: Login,
+    loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
     canActivate: [guestGuard],
   },
   {
     path: 'signup',
-    component: Signup,
+    loadComponent: () => import('./features/auth/signup/signup').then((m) => m.Signup),
     canActivate: [guestGuard],
   },
   {
