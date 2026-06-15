@@ -252,19 +252,28 @@
     }
 
     <div class="flex flex-col gap-1">
-      <label for="outcome-name" class="text-sm font-medium">Name</label>
-      <input
-        pInputText
-        id="outcome-name"
-        formControlName="name"
-        class="w-full"
-        autocomplete="off"
-        [maxlength]="outcomeNameMaxLength"
-        [invalid]="showError('name')"
+      <label for="outcome-amount" class="text-sm font-medium">Amount</label>
+      <p-inputnumber
+        inputId="outcome-amount"
+        formControlName="amount"
+        [minFractionDigits]="0"
+        [maxFractionDigits]="0"
+        styleClass="w-full"
+        inputStyleClass="w-full"
       />
-      @if (showError('name')) {
-        <small class="text-red-500">Name is required.</small>
-      }
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="outcome-category" class="text-sm font-medium">Category</label>
+      <p-select
+        inputId="outcome-category"
+        formControlName="categoryId"
+        [options]="categoryOptions()"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="w-full"
+      />
     </div>
 
     <div class="flex flex-col gap-1">
@@ -295,28 +304,19 @@
     </div>
 
     <div class="flex flex-col gap-1">
-      <label for="outcome-category" class="text-sm font-medium">Category</label>
-      <p-select
-        inputId="outcome-category"
-        formControlName="categoryId"
-        [options]="categoryOptions()"
-        optionLabel="label"
-        optionValue="value"
-        appendTo="body"
-        styleClass="w-full"
+      <label for="outcome-name" class="text-sm font-medium">Name</label>
+      <input
+        pInputText
+        id="outcome-name"
+        formControlName="name"
+        class="w-full"
+        autocomplete="off"
+        [maxlength]="outcomeNameMaxLength"
+        [invalid]="showError('name')"
       />
-    </div>
-
-    <div class="flex flex-col gap-1">
-      <label for="outcome-amount" class="text-sm font-medium">Amount</label>
-      <p-inputnumber
-        inputId="outcome-amount"
-        formControlName="amount"
-        [minFractionDigits]="0"
-        [maxFractionDigits]="0"
-        styleClass="w-full"
-        inputStyleClass="w-full"
-      />
+      @if (showError('name')) {
+        <small class="text-red-500">Name is required.</small>
+      }
     </div>
 
     <div class="flex flex-col gap-1">
