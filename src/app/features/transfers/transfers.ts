@@ -59,6 +59,8 @@ export class Transfers implements OnInit {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly dialogErrorMessage = signal<string | null>(null);
   protected readonly dialogVisible = signal(false);
+  protected readonly editingId = signal<string | null>(null);
+  protected readonly editingTransfer = signal<TransferWithAccounts | null>(null);
 
   private syncing = false;
 
@@ -73,6 +75,10 @@ export class Transfers implements OnInit {
   });
 
   protected readonly accountOptions = computed(() => accountSelectOptions(this.accounts()));
+
+  protected readonly dialogTitle = computed(() =>
+    this.editingId() ? 'Edit transfer' : 'Create transfer',
+  );
 
   ngOnInit(): void {
     void this.reload();
@@ -99,6 +105,8 @@ export class Transfers implements OnInit {
       return;
     }
 
+    this.editingId.set(null);
+    this.editingTransfer.set(null);
     this.errorMessage.set(null);
     this.dialogErrorMessage.set(null);
     this.form.reset({
@@ -113,8 +121,26 @@ export class Transfers implements OnInit {
     this.dialogVisible.set(true);
   }
 
+  protected openEdit(transfer: TransferWithAccounts): void {
+    this.editingId.set(transfer.id);
+    this.editingTransfer.set(transfer);
+    this.dialogErrorMessage.set(null);
+    this.form.reset({
+      name: transfer.name,
+      fromAccountId: transfer.fromAccountId,
+      toAccountId: transfer.toAccountId,
+      amountFrom: transfer.amountFrom,
+      amountTo: transfer.amountTo,
+      exchangeRate: transfer.exchangeRate ?? 1,
+      date: new Date(transfer.date),
+    });
+    this.dialogVisible.set(true);
+  }
+
   protected closeDialog(): void {
     this.dialogVisible.set(false);
+    this.editingId.set(null);
+    this.editingTransfer.set(null);
     this.dialogErrorMessage.set(null);
   }
 
@@ -188,7 +214,7 @@ export class Transfers implements OnInit {
     this.dialogErrorMessage.set(null);
 
     try {
-      await this.transfersService.create({
+      const input = {
         name: raw.name,
         fromAccountId: raw.fromAccountId,
         toAccountId: raw.toAccountId,
@@ -196,7 +222,14 @@ export class Transfers implements OnInit {
         amountTo: raw.amountTo,
         exchangeRate: this.isCrossCurrency() ? raw.exchangeRate : 1,
         date: toIsoDateString(raw.date),
-      });
+      };
+
+      const id = this.editingId();
+      if (id) {
+        await this.transfersService.update(id, input);
+      } else {
+        await this.transfersService.create(input);
+      }
 
       this.closeDialog();
       await this.reload();

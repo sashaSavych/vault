@@ -59,6 +59,31 @@ export class TransfersService {
     return mapTransfer(data as TransferRow);
   }
 
+  async update(id: string, input: TransferInput): Promise<Transfer> {
+    this.validate(input);
+
+    const { data, error } = await this.supabase
+      .from('transfers')
+      .update({
+        name: input.name.trim(),
+        from_account_id: input.fromAccountId,
+        to_account_id: input.toAccountId,
+        amount_from: roundMoneyAmount(input.amountFrom),
+        amount_to: roundMoneyAmount(input.amountTo),
+        exchange_rate: input.exchangeRate,
+        date: input.date,
+      })
+      .eq('id', id)
+      .select('*')
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return mapTransfer(data as TransferRow);
+  }
+
   async remove(id: string): Promise<void> {
     const { error } = await this.supabase.from('transfers').delete().eq('id', id);
 

@@ -53,36 +53,46 @@
           <li
             class="rounded-2xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-800 dark:bg-surface-900"
           >
-            <div class="flex items-start justify-between gap-3">
-              <div class="min-w-0 flex-1">
-                <h2 class="font-medium">{{ transfer.name }}</h2>
-                <p class="mt-1 text-sm text-muted-color">{{ formatDate(transfer.date) }}</p>
-                <p class="mt-2 text-sm">
-                  <span class="font-medium">{{ transfer.fromAccountName }}</span>
-                  <i class="pi pi-arrow-right mx-2 text-muted-color"></i>
-                  <span class="font-medium">{{ transfer.toAccountName }}</span>
-                </p>
-                <p class="mt-2 font-semibold tabular-nums text-primary">
-                  {{ transferSummary(transfer) }}
-                </p>
-                @if (
-                  transfer.exchangeRate &&
-                  transfer.fromAccountCurrency !== transfer.toAccountCurrency
-                ) {
-                  <p class="mt-1 text-xs text-muted-color">
-                    Rate: {{ transfer.exchangeRate }}
-                  </p>
-                }
-              </div>
-              <p-button
-                icon="pi pi-trash"
-                [rounded]="true"
-                [text]="true"
-                severity="danger"
-                ariaLabel="Delete transfer"
-                (onClick)="confirmDelete(transfer, $event)"
-              />
-            </div>
+             <div class="flex items-start justify-between gap-3">
+               <div class="min-w-0 flex-1">
+                 <h2 class="font-medium">{{ transfer.name }}</h2>
+                 <p class="mt-1 text-sm text-muted-color">{{ formatDate(transfer.date) }}</p>
+                 <p class="mt-2 text-sm">
+                   <span class="font-medium">{{ transfer.fromAccountName }}</span>
+                   <i class="pi pi-arrow-right mx-2 text-muted-color"></i>
+                   <span class="font-medium">{{ transfer.toAccountName }}</span>
+                 </p>
+                 <p class="mt-2 font-semibold tabular-nums text-primary">
+                   {{ transferSummary(transfer) }}
+                 </p>
+                 @if (
+                   transfer.exchangeRate &&
+                   transfer.fromAccountCurrency !== transfer.toAccountCurrency
+                 ) {
+                   <p class="mt-1 text-xs text-muted-color">
+                     Rate: {{ transfer.exchangeRate }}
+                   </p>
+                 }
+               </div>
+               <div class="flex gap-1">
+                 <p-button
+                   icon="pi pi-pencil"
+                   [rounded]="true"
+                   [text]="true"
+                   severity="secondary"
+                   ariaLabel="Edit transfer"
+                   (onClick)="openEdit(transfer)"
+                 />
+                 <p-button
+                   icon="pi pi-trash"
+                   [rounded]="true"
+                   [text]="true"
+                   severity="danger"
+                   ariaLabel="Delete transfer"
+                   (onClick)="confirmDelete(transfer, $event)"
+                 />
+               </div>
+             </div>
           </li>
         }
       </ul>
@@ -91,7 +101,7 @@
 </main>
 
 <p-dialog
-  header="Create transfer"
+  [header]="dialogTitle()"
   [modal]="true"
   [dismissableMask]="true"
   [visible]="dialogVisible()"
@@ -227,16 +237,20 @@
       />
     </div>
 
-    <div class="flex justify-end gap-2 pt-2">
-      <p-button
-        type="button"
-        label="Cancel"
-        severity="secondary"
-        [text]="true"
-        (onClick)="closeDialog()"
-      />
-      <p-button type="submit" label="Create" [loading]="saving()" />
-    </div>
+     <div class="flex justify-end gap-2 pt-2">
+       <p-button
+         type="button"
+         label="Cancel"
+         severity="secondary"
+         [text]="true"
+         (onClick)="closeDialog()"
+       />
+       <p-button
+         type="submit"
+         [label]="editingId() ? 'Save' : 'Create'"
+         [loading]="saving()"
+       />
+     </div>
   </form>
 </p-dialog>
 
