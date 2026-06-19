@@ -43,6 +43,12 @@
   width: 100%;
 }
 
+.account-summary-total {
+  font-size: clamp(0.8125rem, 2.8vw, 1rem);
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
 .account-list.cdk-drop-list-dragging .account-list-item:not(.cdk-drag-placeholder) {
   transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
 }

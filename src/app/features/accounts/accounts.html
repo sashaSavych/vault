@@ -54,12 +54,9 @@
           </div>
           <div class="account-summary-totals grid grid-cols-3 gap-2">
             @for (row of balanceByCurrency(); track row.currency) {
-              <div class="min-w-0 text-center">
-                <p class="font-semibold tabular-nums leading-tight">
-                  {{ formatBalanceAmount(row.total) }}
-                </p>
-                <p class="mt-0.5 text-xs text-muted-color">{{ getCurrencySymbol(row.currency) }}</p>
-              </div>
+              <p class="account-summary-total min-w-0 text-center font-semibold tabular-nums">
+                {{ formatBalance(row.total, row.currency) }}
+              </p>
             }
           </div>
         </div>

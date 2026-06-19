@@ -30,7 +30,7 @@ import {
   isValidCardIds,
   parseCardIdsInput,
 } from '../../shared/utils/account-card-ids';
-import { formatBalance, formatBalanceAmount, getCurrencySymbol } from '../../shared/utils/format-balance';
+import { formatBalance } from '../../shared/utils/format-balance';
 import { toErrorMessage } from '../../shared/utils/to-error-message';
 
 const DEFAULT_CARD_IDS = '0000';
@@ -161,8 +161,6 @@ export class Accounts implements OnInit {
   });
 
   protected readonly formatBalance = formatBalance;
-  protected readonly formatBalanceAmount = formatBalanceAmount;
-  protected readonly getCurrencySymbol = getCurrencySymbol;
 
   protected readonly balanceByCurrency = computed(() =>
     summarizeBalanceByCurrency(
