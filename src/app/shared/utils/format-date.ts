@@ -23,3 +23,15 @@ export function parseIsoDate(isoDate: string): Date {
 export function todayIsoDate(): string {
   return toIsoDateString(new Date());
 }
+
+export function startOfCurrentMonthDate(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1);
+}
+
+export function defaultReportDateRange(): { from: Date; to: Date } {
+  return {
+    from: startOfCurrentMonthDate(),
+    to: new Date(),
+  };
+}

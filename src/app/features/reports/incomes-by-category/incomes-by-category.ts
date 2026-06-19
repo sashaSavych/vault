@@ -34,7 +34,7 @@ import {
   reportRowTotalAmount,
   type ReportViewMode,
 } from '../../../shared/utils/format-report-grid';
-import { formatDate, parseIsoDate, toIsoDateString } from '../../../shared/utils/format-date';
+import { defaultReportDateRange, formatDate, parseIsoDate, toIsoDateString } from '../../../shared/utils/format-date';
 import { toErrorMessage } from '../../../shared/utils/to-error-message';
 
 interface SelectedCategory {
@@ -93,8 +93,8 @@ export class IncomesByCategoryReport implements OnInit {
   protected readonly reportView = signal<ReportViewMode>('list');
   protected readonly filtersExpanded = signal(false);
   protected readonly filterCategoryId = signal<string | null>(null);
-  protected readonly filterDateFrom = signal<Date | null>(null);
-  protected readonly filterDateTo = signal<Date | null>(null);
+  protected readonly filterDateFrom = signal<Date | null>(defaultReportDateRange().from);
+  protected readonly filterDateTo = signal<Date | null>(defaultReportDateRange().to);
 
   protected readonly dialogTitle = computed(() =>
     this.editingId() ? 'Edit income' : 'Create income',
@@ -143,9 +143,10 @@ export class IncomesByCategoryReport implements OnInit {
   }
 
   protected async clearFilters(): Promise<void> {
+    const range = defaultReportDateRange();
     this.filterCategoryId.set(null);
-    this.filterDateFrom.set(null);
-    this.filterDateTo.set(null);
+    this.filterDateFrom.set(range.from);
+    this.filterDateTo.set(range.to);
     this.closeCategoryDetail();
     await this.runReport();
   }
