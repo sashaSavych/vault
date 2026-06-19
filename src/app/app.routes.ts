@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { authGuard, guestGuard } from './core/auth/auth.guard';
+import { outcomesPendingChangesGuard } from './features/outcomes/outcomes-pending-changes.guard';
 
 export const routes: Routes = [
   {
@@ -22,6 +23,7 @@ export const routes: Routes = [
     path: 'outcomes',
     loadComponent: () => import('./features/outcomes/outcomes').then((m) => m.Outcomes),
     canActivate: [authGuard],
+    canDeactivate: [outcomesPendingChangesGuard],
   },
   {
     path: 'transfers',

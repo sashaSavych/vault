@@ -4,7 +4,20 @@
       <h1 class="text-2xl font-semibold text-primary">Outcomes</h1>
       <p class="text-sm text-muted-color">Record expenses</p>
     </div>
-    <div class="flex gap-2">
+    <div class="outcome-header-actions flex gap-2">
+      @if (hasPendingChanges()) {
+        <div class="outcome-sync-btn-wrap">
+          <p-button
+            icon="pi pi-cloud-upload"
+            ariaLabel="Sync changes"
+            severity="warn"
+            styleClass="outcome-header-action-btn"
+            (onClick)="syncPendingChanges()"
+            [loading]="syncing()"
+          />
+          <span class="outcome-sync-badge">{{ pendingChangeCount() }}</span>
+        </div>
+      }
       <input
         #importInput
         type="file"
@@ -16,6 +29,7 @@
         icon="pi pi-upload"
         ariaLabel="Import"
         severity="secondary"
+        styleClass="outcome-header-action-btn"
         [outlined]="true"
         (onClick)="openImportPicker()"
         [loading]="importing()"
@@ -24,6 +38,7 @@
       <p-button
         icon="pi pi-plus"
         ariaLabel="Create"
+        styleClass="outcome-header-action-btn"
         (onClick)="openCreate()"
         [disabled]="accounts().length === 0 || categories().length === 0"
       />
@@ -194,7 +209,15 @@
           >
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0 flex-1">
-                <h2 class="font-medium">{{ outcome.name }}</h2>
+                <div class="flex flex-wrap items-center gap-2">
+                  <h2 class="font-medium">{{ outcome.name }}</h2>
+                  @if (isPending(outcome.id)) {
+                    <span
+                      class="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300"
+                      >Unsynced</span
+                    >
+                  }
+                </div>
                 <p class="mt-1 text-sm text-muted-color">{{ formatDate(outcome.date) }}</p>
                 <div class="outcome-card-meta mt-2 text-sm">
                   <span class="min-w-0 truncate">
@@ -431,11 +454,37 @@
       />
       <p-button
         type="button"
-        [label]="'Import ' + selectedImportCount()"
+        [label]="'Add ' + selectedImportCount()"
         [loading]="importConfirming()"
         [disabled]="selectedImportCount() === 0"
         (onClick)="confirmImport()"
       />
+    </div>
+  </div>
+</p-dialog>
+
+<p-dialog
+  header="Unsaved changes"
+  [modal]="true"
+  [dismissableMask]="true"
+  [visible]="leaveDialogVisible()"
+  (visibleChange)="leaveDialogVisible.set($event)"
+  [style]="{ width: '100%', maxWidth: '28rem' }"
+  [draggable]="false"
+  (onHide)="onLeaveDialogHide()"
+>
+  <div class="flex flex-col gap-4">
+    <div class="flex items-start gap-3">
+      <i class="pi pi-exclamation-triangle mt-0.5 shrink-0 text-2xl text-amber-500"></i>
+      <p class="text-sm leading-relaxed">
+        You have {{ pendingChangeCount() }} unsynced outcome change{{
+          pendingChangeCount() === 1 ? '' : 's'
+        }}. Leave without syncing?
+      </p>
+    </div>
+    <div class="flex justify-end gap-2">
+      <p-button label="Stay" severity="secondary" [outlined]="true" (onClick)="stayOnPage()" />
+      <p-button label="Leave" severity="danger" (onClick)="leavePage()" />
     </div>
   </div>
 </p-dialog>
