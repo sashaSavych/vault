@@ -15,6 +15,7 @@ import { mapIncome } from '../models/income';
 import { AuthService } from '../auth/auth.service';
 import { getSupabaseClient } from '../supabase/supabase';
 import { categoryLabel } from '../../shared/utils/category-select-options';
+import { categorySelfAndDescendantIds } from '../../shared/utils/category-tree';
 import { roundMoneyAmount } from '../../shared/utils/format-balance';
 
 @Injectable({ providedIn: 'root' })
@@ -25,6 +26,17 @@ export class IncomesService {
   private readonly categoriesService = inject(CategoriesService);
 
   async list(filters: IncomeListFilters = {}): Promise<IncomeWithDetails[]> {
+    const categoriesPromise = this.categoriesService.list('income');
+    const accountsPromise = this.accountsService.list();
+
+    let categoryIds: string[] | undefined;
+    if (filters.categoryId) {
+      categoryIds = categorySelfAndDescendantIds(
+        await categoriesPromise,
+        filters.categoryId,
+      );
+    }
+
     let query = this.supabase
       .from('incomes')
       .select('*')
@@ -34,8 +46,10 @@ export class IncomesService {
     if (filters.accountId) {
       query = query.eq('account_id', filters.accountId);
     }
-    if (filters.categoryId) {
-      query = query.eq('category_id', filters.categoryId);
+    if (categoryIds?.length === 1) {
+      query = query.eq('category_id', categoryIds[0]);
+    } else if (categoryIds && categoryIds.length > 1) {
+      query = query.in('category_id', categoryIds);
     }
     if (filters.dateFrom) {
       query = query.gte('date', filters.dateFrom);
@@ -46,8 +60,8 @@ export class IncomesService {
 
     const [incomesResult, accounts, categories] = await Promise.all([
       query,
-      this.accountsService.list(),
-      this.categoriesService.list('income'),
+      accountsPromise,
+      categoriesPromise,
     ]);
 
     if (incomesResult.error) {

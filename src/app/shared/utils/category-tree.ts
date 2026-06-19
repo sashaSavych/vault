@@ -65,6 +65,15 @@ export function categoryDescendantIds(categories: Category[], categoryId: string
   return descendants;
 }
 
+/** Category id plus all nested subcategory ids (for inclusive filters). */
+export function categorySelfAndDescendantIds(
+  categories: Category[],
+  categoryId: string,
+): string[] {
+  const descendants = categoryDescendantIds(categories, categoryId);
+  return [categoryId, ...descendants];
+}
+
 export function isCategoryUnder(
   categories: Category[],
   categoryId: string,
