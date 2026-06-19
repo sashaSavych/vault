@@ -27,7 +27,7 @@ import {
   categorySelectOptions,
 } from '../../shared/utils/category-select-options';
 import { formatBalance } from '../../shared/utils/format-balance';
-import { formatDate, parseIsoDate, toIsoDateString } from '../../shared/utils/format-date';
+import { defaultFilterDateRange, formatDate, parseIsoDate, toIsoDateString } from '../../shared/utils/format-date';
 import { toErrorMessage } from '../../shared/utils/to-error-message';
 
 @Component({
@@ -76,8 +76,8 @@ export class Incomes implements OnInit {
   protected readonly filtersExpanded = signal(false);
   protected readonly filterAccountId = signal<string | null>(null);
   protected readonly filterCategoryId = signal<string | null>(null);
-  protected readonly filterDateFrom = signal<Date | null>(null);
-  protected readonly filterDateTo = signal<Date | null>(null);
+  protected readonly filterDateFrom = signal<Date | null>(defaultFilterDateRange().from);
+  protected readonly filterDateTo = signal<Date | null>(defaultFilterDateRange().to);
 
   protected readonly form = this.fb.nonNullable.group({
     name: ['Income', [Validators.required, Validators.maxLength(80)]],
@@ -168,10 +168,11 @@ export class Incomes implements OnInit {
   }
 
   protected async clearFilters(): Promise<void> {
+    const range = defaultFilterDateRange();
     this.filterAccountId.set(null);
     this.filterCategoryId.set(null);
-    this.filterDateFrom.set(null);
-    this.filterDateTo.set(null);
+    this.filterDateFrom.set(range.from);
+    this.filterDateTo.set(range.to);
     await this.reloadIncomes();
   }
 

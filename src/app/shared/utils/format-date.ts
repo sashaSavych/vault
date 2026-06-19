@@ -29,7 +29,7 @@ export function startOfCurrentMonthDate(): Date {
   return new Date(now.getFullYear(), now.getMonth(), 1);
 }
 
-export function defaultReportDateRange(): { from: Date; to: Date } {
+export function defaultFilterDateRange(): { from: Date; to: Date } {
   return {
     from: startOfCurrentMonthDate(),
     to: new Date(),

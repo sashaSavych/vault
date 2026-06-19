@@ -38,7 +38,7 @@ import {
   reportRowTotalAmount,
   type ReportViewMode,
 } from '../../../shared/utils/format-report-grid';
-import { defaultReportDateRange, formatDate, parseIsoDate, toIsoDateString } from '../../../shared/utils/format-date';
+import { defaultFilterDateRange, formatDate, parseIsoDate, toIsoDateString } from '../../../shared/utils/format-date';
 import { toErrorMessage } from '../../../shared/utils/to-error-message';
 
 interface SelectedCategory {
@@ -98,8 +98,8 @@ export class OutcomesByCategoryReport implements OnInit {
   protected readonly reportView = signal<ReportViewMode>('list');
   protected readonly filtersExpanded = signal(false);
   protected readonly filterCategoryId = signal<string | null>(null);
-  protected readonly filterDateFrom = signal<Date | null>(defaultReportDateRange().from);
-  protected readonly filterDateTo = signal<Date | null>(defaultReportDateRange().to);
+  protected readonly filterDateFrom = signal<Date | null>(defaultFilterDateRange().from);
+  protected readonly filterDateTo = signal<Date | null>(defaultFilterDateRange().to);
 
   protected readonly dialogTitle = computed(() =>
     this.editingId() ? 'Edit outcome' : 'Create outcome',
@@ -148,7 +148,7 @@ export class OutcomesByCategoryReport implements OnInit {
   }
 
   protected async clearFilters(): Promise<void> {
-    const range = defaultReportDateRange();
+    const range = defaultFilterDateRange();
     this.filterCategoryId.set(null);
     this.filterDateFrom.set(range.from);
     this.filterDateTo.set(range.to);

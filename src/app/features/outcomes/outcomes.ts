@@ -49,7 +49,7 @@ import {
   proceedOrConfirmInsufficientBalance,
 } from '../../shared/utils/confirm-insufficient-balance';
 import { formatBalance } from '../../shared/utils/format-balance';
-import { formatDate, parseIsoDate, toIsoDateString } from '../../shared/utils/format-date';
+import { defaultFilterDateRange, formatDate, parseIsoDate, toIsoDateString } from '../../shared/utils/format-date';
 import {
   createPendingOutcomeId,
   isPendingOutcomeId,
@@ -150,8 +150,8 @@ export class Outcomes implements OnInit {
   protected readonly filtersExpanded = signal(false);
   protected readonly filterAccountId = signal<string | null>(null);
   protected readonly filterCategoryId = signal<string | null>(null);
-  protected readonly filterDateFrom = signal<Date | null>(null);
-  protected readonly filterDateTo = signal<Date | null>(null);
+  protected readonly filterDateFrom = signal<Date | null>(defaultFilterDateRange().from);
+  protected readonly filterDateTo = signal<Date | null>(defaultFilterDateRange().to);
 
   protected readonly form = this.fb.nonNullable.group({
     name: ['Outcome', [Validators.required, Validators.maxLength(OUTCOME_NAME_MAX_LENGTH)]],
@@ -674,10 +674,11 @@ export class Outcomes implements OnInit {
   }
 
   protected async clearFilters(): Promise<void> {
+    const range = defaultFilterDateRange();
     this.filterAccountId.set(null);
     this.filterCategoryId.set(null);
-    this.filterDateFrom.set(null);
-    this.filterDateTo.set(null);
+    this.filterDateFrom.set(range.from);
+    this.filterDateTo.set(range.to);
     await this.reloadOutcomes();
   }
 
