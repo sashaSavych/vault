@@ -344,6 +344,42 @@ export function toOutcomeInput(item: OutcomeImportItem): OutcomeInput {
   };
 }
 
+export type OutcomeImportFingerprint = Pick<
+  OutcomeInput,
+  'accountId' | 'date' | 'amount' | 'name'
+>;
+
+/** Stable key for duplicate detection: account + date + amount + normalized name. */
+export function outcomeImportFingerprint(item: OutcomeImportFingerprint): string {
+  return [
+    item.accountId,
+    item.date,
+    roundMoneyAmount(item.amount),
+    normalizeOutcomeName(item.name).toLowerCase(),
+  ].join('|');
+}
+
+export function dedupeOutcomeImports(
+  items: OutcomeImportItem[],
+  existing: OutcomeImportFingerprint[],
+): { unique: OutcomeImportItem[]; duplicateCount: number } {
+  const known = new Set(existing.map(outcomeImportFingerprint));
+  const unique: OutcomeImportItem[] = [];
+  let duplicateCount = 0;
+
+  for (const item of items) {
+    const key = outcomeImportFingerprint(item);
+    if (known.has(key)) {
+      duplicateCount++;
+      continue;
+    }
+    known.add(key);
+    unique.push(item);
+  }
+
+  return { unique, duplicateCount };
+}
+
 export function fallbackCategoryMapping(
   bankCategories: string[],
   categories: Category[],

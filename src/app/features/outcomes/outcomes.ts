@@ -24,8 +24,10 @@ import {
 import { OutcomesService } from '../../core/outcomes/outcomes.service';
 import {
   buildOutcomeImports,
+  dedupeOutcomeImports,
   gridToStatementText,
   isImportSavable,
+  outcomeImportFingerprint,
   parseStatementGrid,
   toOutcomeInput,
 } from '../../shared/utils/parse-statement';
@@ -261,14 +263,39 @@ export class Outcomes implements OnInit {
         );
       }
 
-      const saved = await this.outcomesService.createMany(savable.map(toOutcomeInput));
+      const dates = savable.map((item) => item.date);
+      const dateFrom = dates.reduce((min, date) => (date < min ? date : min));
+      const dateTo = dates.reduce((max, date) => (date > max ? date : max));
+      const existing = await this.outcomesService.list({ dateFrom, dateTo });
+      const { unique: toSave, duplicateCount } = dedupeOutcomeImports(savable, existing);
+
+      if (toSave.length === 0) {
+        console.group('Outcome import');
+        console.log('Source:', file.name);
+        console.log('Debit rows parsed:', rows.length);
+        console.log('Duplicates skipped:', duplicateCount);
+        console.log('Validation skipped:', skipped);
+        console.groupEnd();
+
+        const summary =
+          duplicateCount > 0
+            ? `No new outcomes. ${duplicateCount} duplicate${duplicateCount === 1 ? '' : 's'} skipped.`
+            : 'No new outcomes to import.';
+        this.successMessage.set(summary);
+        return;
+      }
+
+      const saved = await this.outcomesService.createMany(toSave.map(toOutcomeInput));
+
+      const savedFingerprints = new Set(toSave.map(outcomeImportFingerprint));
 
       console.group('Outcome import');
       console.log('Source:', file.name);
       console.log('Category mapping source:', 'edge-function');
       console.log('Debit rows parsed:', rows.length);
       console.log('Saved to DB:', saved);
-      console.log('Skipped:', skipped);
+      console.log('Duplicates skipped:', duplicateCount);
+      console.log('Validation skipped:', skipped);
       console.table(
         items.map((item) => ({
           name: item.name,
@@ -282,7 +309,11 @@ export class Outcomes implements OnInit {
           bankCategory: item.bankCategory,
           category: item.categoryName ?? item.categoryId,
           categoryBy: item.categoryMatchedBy ?? '',
-          saved: isImportSavable(item) ? 'yes' : 'no',
+          saved: !isImportSavable(item)
+            ? 'no'
+            : savedFingerprints.has(outcomeImportFingerprint(item))
+              ? 'yes'
+              : 'duplicate',
           error: item.error ?? '',
         })),
       );
@@ -290,11 +321,19 @@ export class Outcomes implements OnInit {
 
       await this.reload();
 
-      const summary =
-        skipped > 0
-          ? `Imported ${saved} outcome${saved === 1 ? '' : 's'}. ${skipped} row${skipped === 1 ? '' : 's'} skipped.`
-          : `Imported ${saved} outcome${saved === 1 ? '' : 's'}.`;
-      this.successMessage.set(summary);
+      const summaryParts: string[] = [];
+      if (saved > 0) {
+        summaryParts.push(`Imported ${saved} outcome${saved === 1 ? '' : 's'}.`);
+      }
+      if (duplicateCount > 0) {
+        summaryParts.push(
+          `${duplicateCount} duplicate${duplicateCount === 1 ? '' : 's'} skipped.`,
+        );
+      }
+      if (skipped > 0) {
+        summaryParts.push(`${skipped} row${skipped === 1 ? '' : 's'} skipped.`);
+      }
+      this.successMessage.set(summaryParts.join(' '));
     } catch (error) {
       console.error('Import failed:', error);
       this.errorMessage.set(toErrorMessage(error));

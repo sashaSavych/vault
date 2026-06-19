@@ -43,5 +43,6 @@ Configure `chatAiEndpoint` in `src/environments/environment.ts`.
 - Account is resolved by the last 4 digits of the masked card number (e.g. `4627 **** **** 8458` → `8458`), checked against all IDs on the account.
 - Rows with no matching account are assigned to an account named **Undefined** if it exists.
 - Rows that cannot be resolved (invalid date/amount, missing category) are skipped; valid rows are saved to `outcomes`.
+- Duplicates are skipped: same account, date, amount, and normalized **Опис операції** as an existing outcome (within the import date range) or another row in the same file.
 
 Implementation: `src/app/shared/utils/parse-statement.ts`, `src/app/shared/utils/read-xlsx.ts` (SheetJS).
