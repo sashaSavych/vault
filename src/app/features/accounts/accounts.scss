@@ -2,6 +2,47 @@
   display: block;
 }
 
+.account-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.account-summary-toggle {
+  display: inline-flex;
+  margin-bottom: 0.75rem;
+  padding: 0.125rem;
+  border-radius: 9999px;
+  background: var(--p-content-hover-background);
+  border: 1px solid var(--p-content-border-color);
+}
+
+.account-summary-toggle-btn {
+  min-width: 3.5rem;
+  padding: 0.25rem 0.75rem;
+  border: none;
+  border-radius: 9999px;
+  background: transparent;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  color: var(--p-text-muted-color);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.account-summary-toggle-btn.is-active {
+  background: var(--p-content-background);
+  color: var(--p-text-color);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+}
+
+.account-summary-totals {
+  width: 100%;
+}
+
 .account-list.cdk-drop-list-dragging .account-list-item:not(.cdk-drag-placeholder) {
   transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
 }

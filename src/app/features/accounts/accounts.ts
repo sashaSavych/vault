@@ -17,7 +17,9 @@ import { Tag } from 'primeng/tag';
 import { ToggleSwitch } from 'primeng/toggleswitch';
 
 import { AccountsService } from '../../core/accounts/accounts.service';
+import { DebtsService } from '../../core/debts/debts.service';
 import type { Account } from '../../core/models/account';
+import type { Debt } from '../../core/models/debt';
 import {
   ACCOUNT_TYPES,
   accountTypeClasses,
@@ -28,11 +30,57 @@ import {
   isValidCardIds,
   parseCardIdsInput,
 } from '../../shared/utils/account-card-ids';
-import { formatBalance } from '../../shared/utils/format-balance';
+import { formatBalance, formatBalanceAmount, getCurrencySymbol } from '../../shared/utils/format-balance';
 import { toErrorMessage } from '../../shared/utils/to-error-message';
 
 const DEFAULT_CARD_IDS = '0000';
 const SUMMARY_CURRENCIES = ['UAH', 'USD', 'EUR'] as const;
+
+function debtBalanceAdjustment(type: Debt['type'], balance: number): number {
+  return type === 'lend' ? balance : -balance;
+}
+
+function summarizeBalanceByCurrency(
+  accounts: Account[],
+  debts: Debt[],
+  includeDebts: boolean,
+): { currency: string; total: number }[] {
+  const totals = new Map<string, number>(
+    SUMMARY_CURRENCIES.map((currency) => [currency, 0]),
+  );
+
+  for (const account of accounts) {
+    if (totals.has(account.currency)) {
+      totals.set(account.currency, (totals.get(account.currency) ?? 0) + account.balance);
+    }
+  }
+
+  if (includeDebts) {
+    const activeAccountIds = new Set(accounts.map((account) => account.id));
+    const currencyByAccountId = new Map(accounts.map((account) => [account.id, account.currency]));
+
+    for (const debt of debts) {
+      if (!activeAccountIds.has(debt.accountId)) {
+        continue;
+      }
+
+      const currency = currencyByAccountId.get(debt.accountId);
+      if (!currency || !totals.has(currency)) {
+        continue;
+      }
+
+      totals.set(
+        currency,
+        (totals.get(currency) ?? 0) + debtBalanceAdjustment(debt.type, debt.balance),
+      );
+    }
+  }
+
+  return SUMMARY_CURRENCIES.map((currency) => ({
+    currency,
+    total: totals.get(currency) ?? 0,
+  }));
+}
 
 function cardIdsValidator(control: AbstractControl): ValidationErrors | null {
   const cardIds = parseCardIdsInput(String(control.value ?? ''));
@@ -64,6 +112,7 @@ function cardIdsValidator(control: AbstractControl): ValidationErrors | null {
 })
 export class Accounts implements OnInit {
   private readonly accountsService = inject(AccountsService);
+  private readonly debtsService = inject(DebtsService);
   private readonly fb = inject(FormBuilder);
 
   protected readonly currencies = [...CURRENCIES];
@@ -72,6 +121,8 @@ export class Accounts implements OnInit {
 
   protected readonly activeAccounts = signal<Account[]>([]);
   protected readonly archivedAccounts = signal<Account[]>([]);
+  protected readonly debts = signal<Debt[]>([]);
+  protected readonly includeDebtsInSummary = signal(false);
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly reordering = signal(false);
@@ -110,23 +161,16 @@ export class Accounts implements OnInit {
   });
 
   protected readonly formatBalance = formatBalance;
+  protected readonly formatBalanceAmount = formatBalanceAmount;
+  protected readonly getCurrencySymbol = getCurrencySymbol;
 
-  protected readonly balanceByCurrency = computed(() => {
-    const totals = new Map<string, number>(
-      SUMMARY_CURRENCIES.map((currency) => [currency, 0]),
-    );
-
-    for (const account of this.activeAccounts()) {
-      if (totals.has(account.currency)) {
-        totals.set(account.currency, (totals.get(account.currency) ?? 0) + account.balance);
-      }
-    }
-
-    return SUMMARY_CURRENCIES.map((currency) => ({
-      currency,
-      total: totals.get(currency) ?? 0,
-    }));
-  });
+  protected readonly balanceByCurrency = computed(() =>
+    summarizeBalanceByCurrency(
+      this.activeAccounts(),
+      this.debts(),
+      this.includeDebtsInSummary(),
+    ),
+  );
 
   ngOnInit(): void {
     void this.reload();
@@ -301,13 +345,18 @@ export class Accounts implements OnInit {
     this.errorMessage.set(null);
 
     try {
-      const accounts = await this.accountsService.list({ includeArchived: true });
+      const [accounts, debts] = await Promise.all([
+        this.accountsService.list({ includeArchived: true }),
+        this.debtsService.list(),
+      ]);
       this.activeAccounts.set(accounts.filter((account) => !account.archivedAt));
       this.archivedAccounts.set(accounts.filter((account) => account.archivedAt));
+      this.debts.set(debts);
     } catch (error) {
       this.errorMessage.set(toErrorMessage(error));
       this.activeAccounts.set([]);
       this.archivedAccounts.set([]);
+      this.debts.set([]);
     } finally {
       this.loading.set(false);
     }

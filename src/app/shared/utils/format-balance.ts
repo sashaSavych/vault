@@ -12,6 +12,12 @@ export function getCurrencySymbol(code: string): string {
   return map[code] ?? code;
 }
 
+export function formatBalanceAmount(amount: number): string {
+  return new Intl.NumberFormat(undefined, {
+    maximumFractionDigits: 0,
+  }).format(roundMoneyAmount(amount));
+}
+
 export function formatBalance(amount: number, currency: string): string {
   const formatted = new Intl.NumberFormat(undefined, {
     maximumFractionDigits: 0,
