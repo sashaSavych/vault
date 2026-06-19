@@ -50,10 +50,6 @@
       <p-message severity="error" [text]="message" styleClass="mb-4 w-full" />
     }
 
-    @if (successMessage(); as message) {
-      <p-message severity="success" [text]="message" styleClass="mb-4 w-full" />
-    }
-
     @if (!loading() && accounts().length > 0) {
       <div
         id="filters"

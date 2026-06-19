@@ -2,6 +2,42 @@
 @import 'tailwindcss-primeui';
 @import 'primeicons/primeicons.css';
 
+@layer primeng {
+  .p-toast {
+    width: auto;
+    max-width: min(24rem, calc(100vw - 2rem));
+  }
+
+  .p-toast-message-success,
+  .p-toast-message-info,
+  .p-toast-message-warn,
+  .p-toast-message-error,
+  .p-toast-message-secondary,
+  .p-toast-message-contrast {
+    backdrop-filter: none;
+  }
+
+  .p-toast-message {
+    transform: none !important;
+  }
+
+  .p-toast-message-content {
+    align-items: center;
+  }
+
+  .p-toast-summary:empty,
+  .p-toast-detail:empty {
+    display: none;
+  }
+
+  .p-toast-close-button {
+    margin: 0;
+    right: 0;
+    position: relative;
+    flex-shrink: 0;
+  }
+}
+
 body:has(app-nav) main {
   padding-bottom: calc(6.5rem + env(safe-area-inset-bottom, 0));
 }

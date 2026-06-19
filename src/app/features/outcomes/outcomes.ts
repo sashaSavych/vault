@@ -1,7 +1,7 @@
 import { Component, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { ConfirmationService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { Button } from 'primeng/button';
 import { Checkbox } from 'primeng/checkbox';
 import { ConfirmDialog } from 'primeng/confirmdialog';
@@ -105,6 +105,7 @@ export class Outcomes implements OnInit {
   private readonly categoryMappingsService = inject(CategoryMappingsService);
   private readonly categoryMatch = inject(CategoryMatchService);
   private readonly confirmation = inject(ConfirmationService);
+  private readonly messages = inject(MessageService);
   private readonly fb = inject(FormBuilder);
 
   private readonly importInput = viewChild<ElementRef<HTMLInputElement>>('importInput');
@@ -132,7 +133,6 @@ export class Outcomes implements OnInit {
   protected readonly convertSaving = signal(false);
   protected readonly convertingOutcome = signal<OutcomeWithDetails | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
-  protected readonly successMessage = signal<string | null>(null);
   protected readonly dialogErrorMessage = signal<string | null>(null);
   protected readonly dialogVisible = signal(false);
   protected readonly importDialogVisible = signal(false);
@@ -454,7 +454,6 @@ export class Outcomes implements OnInit {
   private async importFromFile(file: File): Promise<void> {
     this.importing.set(true);
     this.errorMessage.set(null);
-    this.successMessage.set(null);
 
     try {
       const { readStatementXlsx } = await import('../../shared/utils/read-xlsx');
@@ -517,7 +516,7 @@ export class Outcomes implements OnInit {
           duplicateCount > 0
             ? `No new outcomes. ${duplicateCount} duplicate${duplicateCount === 1 ? '' : 's'} skipped.`
             : 'No new outcomes to import.';
-        this.successMessage.set(summary);
+        this.showSuccessToast(summary);
         return;
       }
 
@@ -646,7 +645,7 @@ export class Outcomes implements OnInit {
       if (unchecked > 0) {
         summaryParts.push(`${unchecked} not added (unchecked).`);
       }
-      this.successMessage.set(summaryParts.join(' '));
+      this.showSuccessToast(summaryParts.join(' '));
     } catch (error) {
       this.importDialogError.set(toErrorMessage(error));
     } finally {
@@ -751,7 +750,6 @@ export class Outcomes implements OnInit {
     }
 
     this.closeDialog();
-    this.successMessage.set(null);
   }
 
   private async performConvertToTransfer(): Promise<void> {
@@ -765,7 +763,6 @@ export class Outcomes implements OnInit {
     this.convertSaving.set(true);
     this.convertDialogError.set(null);
     this.errorMessage.set(null);
-    this.successMessage.set(null);
 
     try {
       await this.transfersService.create({
@@ -782,7 +779,7 @@ export class Outcomes implements OnInit {
 
       this.accounts.set(await this.accountsService.list());
       this.closeConvertDialog();
-      this.successMessage.set('Converted to transfer.');
+      this.showSuccessToast('Converted to transfer.');
     } catch (error) {
       this.convertDialogError.set(toErrorMessage(error));
     } finally {
@@ -854,7 +851,6 @@ export class Outcomes implements OnInit {
   private async performSync(): Promise<void> {
     this.syncing.set(true);
     this.errorMessage.set(null);
-    this.successMessage.set(null);
 
     const deletes = [...this.pendingDeletes()];
     const updates = [...this.pendingUpdates()];
@@ -875,7 +871,7 @@ export class Outcomes implements OnInit {
 
       this.clearPendingChanges();
       await this.reload();
-      this.successMessage.set('All changes synced.');
+      this.showSuccessToast('All changes synced.');
     } catch (error) {
       this.errorMessage.set(toErrorMessage(error));
       await this.reloadOutcomes();
@@ -921,9 +917,17 @@ export class Outcomes implements OnInit {
     return control.invalid && control.touched;
   }
 
+  private showSuccessToast(detail: string): void {
+    this.messages.add({
+      severity: 'success',
+      summary: detail,
+      closable: false,
+      life: 5000,
+    });
+  }
+
   private deleteOutcome(id: string): void {
     this.errorMessage.set(null);
-    this.successMessage.set(null);
 
     if (isPendingOutcomeId(id)) {
       this.pendingCreates.update((pending) => pending.filter((item) => item.tempId !== id));
