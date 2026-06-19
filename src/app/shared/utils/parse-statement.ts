@@ -4,6 +4,7 @@ import { normalizeOutcomeName, type OutcomeInput } from '../../core/models/outco
 import { roundMoneyAmount } from './format-balance';
 import { accountMatchesCardLast4 } from './account-card-ids';
 import { categoryLabel } from './category-select-options';
+import { categoryPath } from './category-tree';
 
 export const COL_DATE = 'Дата';
 export const COL_CATEGORY = 'Категорія';
@@ -309,15 +310,14 @@ function matchCategoryByItemName(
 
 function categoryMatchLabels(category: Category, categories: Category[]): string[] {
   const name = normalizeMappingKey(category.name);
-  const parent = category.parentId
-    ? categories.find((item) => item.id === category.parentId)
-    : undefined;
+  const path = normalizeMappingKey(categoryPath(categories, category.id));
+  const labels = [name];
 
-  if (parent) {
-    return [name, normalizeMappingKey(`${parent.name} / ${category.name}`)];
+  if (path !== name) {
+    labels.push(path);
   }
 
-  return [name];
+  return labels;
 }
 
 function normalizeMappingKey(value: string): string {

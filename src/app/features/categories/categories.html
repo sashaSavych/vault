@@ -55,101 +55,12 @@
               No income categories yet.
             </p>
           } @else {
-            <ul
-              class="category-tree flex flex-col gap-2"
-              cdkDropList
-              [cdkDropListDisabled]="reordering()"
-              (cdkDropListDropped)="dropRootCategory($event, 'income')"
-            >
-              @for (node of incomeTree(); track node.category.id) {
-                <li class="category-tree-group flex flex-col gap-2">
-                  <div
-                    cdkDrag
-                    [cdkDragStartDelay]="dragStartDelayMs()"
-                    class="category-list-item flex items-center justify-between gap-3 rounded-xl border border-surface-200 bg-surface-0 px-4 py-3 dark:border-surface-800 dark:bg-surface-900"
-                  >
-                    <div class="flex min-w-0 items-center gap-2">
-                      <div
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
-                      >
-                        <i [class]="iconClass(node.category.icon) + ' text-lg'"></i>
-                      </div>
-                      <span class="truncate font-medium">{{ node.category.name }}</span>
-                    </div>
-                    <div class="flex shrink-0 gap-1">
-                      <p-button
-                        icon="pi pi-plus"
-                        [rounded]="true"
-                        [text]="true"
-                        severity="secondary"
-                        ariaLabel="Add subcategory"
-                        (onClick)="openCreate('income', node.category.id)"
-                      />
-                      <p-button
-                        icon="pi pi-pencil"
-                        [rounded]="true"
-                        [text]="true"
-                        severity="secondary"
-                        ariaLabel="Edit category"
-                        (onClick)="openEdit(node.category)"
-                      />
-                      <p-button
-                        icon="pi pi-trash"
-                        [rounded]="true"
-                        [text]="true"
-                        severity="danger"
-                        ariaLabel="Delete category"
-                        (onClick)="confirmDelete(node.category, $event)"
-                      />
-                    </div>
-                  </div>
-                  @if (node.children.length > 0) {
-                    <ul
-                      class="category-tree-children ml-8 flex flex-col gap-2"
-                      cdkDropList
-                      [cdkDropListData]="node.children"
-                      [cdkDropListDisabled]="reordering()"
-                      (cdkDropListDropped)="dropChildCategory($event, node.category.id)"
-                    >
-                      @for (child of node.children; track child.id) {
-                        <li
-                          cdkDrag
-                          [cdkDragStartDelay]="dragStartDelayMs()"
-                          class="category-list-item flex items-center justify-between gap-3 rounded-xl border border-surface-200 bg-surface-50 px-4 py-3 dark:border-surface-800 dark:bg-surface-950"
-                        >
-                          <div class="flex min-w-0 items-center gap-2">
-                            <div
-                              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
-                            >
-                              <i [class]="iconClass(child.icon)"></i>
-                            </div>
-                            <span class="truncate text-sm font-medium">{{ child.name }}</span>
-                          </div>
-                          <div class="flex shrink-0 gap-1">
-                            <p-button
-                              icon="pi pi-pencil"
-                              [rounded]="true"
-                              [text]="true"
-                              severity="secondary"
-                              ariaLabel="Edit subcategory"
-                              (onClick)="openEdit(child)"
-                            />
-                            <p-button
-                              icon="pi pi-trash"
-                              [rounded]="true"
-                              [text]="true"
-                              severity="danger"
-                              ariaLabel="Delete subcategory"
-                              (onClick)="confirmDelete(child, $event)"
-                            />
-                          </div>
-                        </li>
-                      }
-                    </ul>
-                  }
-                </li>
-              }
-            </ul>
+            <ng-container
+              *ngTemplateOutlet="
+                categoryTree;
+                context: { $implicit: incomeTree(), depth: 0, type: 'income' }
+              "
+            />
           }
             </div>
           }
@@ -190,101 +101,12 @@
               No outcome categories yet.
             </p>
           } @else {
-            <ul
-              class="category-tree flex flex-col gap-2"
-              cdkDropList
-              [cdkDropListDisabled]="reordering()"
-              (cdkDropListDropped)="dropRootCategory($event, 'outcome')"
-            >
-              @for (node of outcomeTree(); track node.category.id) {
-                <li class="category-tree-group flex flex-col gap-2">
-                  <div
-                    cdkDrag
-                    [cdkDragStartDelay]="dragStartDelayMs()"
-                    class="category-list-item flex items-center justify-between gap-3 rounded-xl border border-surface-200 bg-surface-0 px-4 py-3 dark:border-surface-800 dark:bg-surface-900"
-                  >
-                    <div class="flex min-w-0 items-center gap-2">
-                      <div
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
-                      >
-                        <i [class]="iconClass(node.category.icon) + ' text-lg'"></i>
-                      </div>
-                      <span class="truncate font-medium">{{ node.category.name }}</span>
-                    </div>
-                    <div class="flex shrink-0 gap-1">
-                      <p-button
-                        icon="pi pi-plus"
-                        [rounded]="true"
-                        [text]="true"
-                        severity="secondary"
-                        ariaLabel="Add subcategory"
-                        (onClick)="openCreate('outcome', node.category.id)"
-                      />
-                      <p-button
-                        icon="pi pi-pencil"
-                        [rounded]="true"
-                        [text]="true"
-                        severity="secondary"
-                        ariaLabel="Edit category"
-                        (onClick)="openEdit(node.category)"
-                      />
-                      <p-button
-                        icon="pi pi-trash"
-                        [rounded]="true"
-                        [text]="true"
-                        severity="danger"
-                        ariaLabel="Delete category"
-                        (onClick)="confirmDelete(node.category, $event)"
-                      />
-                    </div>
-                  </div>
-                  @if (node.children.length > 0) {
-                    <ul
-                      class="category-tree-children ml-8 flex flex-col gap-2"
-                      cdkDropList
-                      [cdkDropListData]="node.children"
-                      [cdkDropListDisabled]="reordering()"
-                      (cdkDropListDropped)="dropChildCategory($event, node.category.id)"
-                    >
-                      @for (child of node.children; track child.id) {
-                        <li
-                          cdkDrag
-                          [cdkDragStartDelay]="dragStartDelayMs()"
-                          class="category-list-item flex items-center justify-between gap-3 rounded-xl border border-surface-200 bg-surface-50 px-4 py-3 dark:border-surface-800 dark:bg-surface-950"
-                        >
-                          <div class="flex min-w-0 items-center gap-2">
-                            <div
-                              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
-                            >
-                              <i [class]="iconClass(child.icon)"></i>
-                            </div>
-                            <span class="truncate text-sm font-medium">{{ child.name }}</span>
-                          </div>
-                          <div class="flex shrink-0 gap-1">
-                            <p-button
-                              icon="pi pi-pencil"
-                              [rounded]="true"
-                              [text]="true"
-                              severity="secondary"
-                              ariaLabel="Edit subcategory"
-                              (onClick)="openEdit(child)"
-                            />
-                            <p-button
-                              icon="pi pi-trash"
-                              [rounded]="true"
-                              [text]="true"
-                              severity="danger"
-                              ariaLabel="Delete subcategory"
-                              (onClick)="confirmDelete(child, $event)"
-                            />
-                          </div>
-                        </li>
-                      }
-                    </ul>
-                  }
-                </li>
-              }
-            </ul>
+            <ng-container
+              *ngTemplateOutlet="
+                categoryTree;
+                context: { $implicit: outcomeTree(), depth: 0, type: 'outcome' }
+              "
+            />
           }
             </div>
           }
@@ -293,6 +115,84 @@
     }
   </section>
 </main>
+
+<ng-template #categoryTree let-nodes let-depth="depth" let-type="type">
+  <ul
+    class="flex flex-col gap-2"
+    [class.category-tree]="depth === 0"
+    [class.category-tree-children]="depth > 0"
+    [class.ml-8]="depth > 0"
+    cdkDropList
+    [cdkDropListData]="nodes"
+    [cdkDropListDisabled]="reordering()"
+    (cdkDropListDropped)="dropCategoryNodes($event, type)"
+  >
+    @for (node of nodes; track node.category.id) {
+      <li class="category-tree-group flex flex-col gap-2">
+        <div
+          cdkDrag
+          [cdkDragStartDelay]="dragStartDelayMs()"
+          class="category-list-item flex items-center justify-between gap-3 rounded-xl border border-surface-200 px-4 py-3 dark:border-surface-800"
+          [class.bg-surface-0]="depth === 0"
+          [class.dark:bg-surface-900]="depth === 0"
+          [class.bg-surface-50]="depth > 0"
+          [class.dark:bg-surface-950]="depth > 0"
+        >
+          <div class="flex min-w-0 items-center gap-2">
+            <div
+              class="flex shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+              [class.h-10]="depth === 0"
+              [class.w-10]="depth === 0"
+              [class.h-9]="depth > 0"
+              [class.w-9]="depth > 0"
+            >
+              <i
+                [class]="iconClass(node.category.icon) + (depth === 0 ? ' text-lg' : '')"
+              ></i>
+            </div>
+            <span class="truncate font-medium" [class.text-sm]="depth > 0">{{
+              node.category.name
+            }}</span>
+          </div>
+          <div class="flex shrink-0 gap-1">
+            <p-button
+              icon="pi pi-plus"
+              [rounded]="true"
+              [text]="true"
+              severity="secondary"
+              ariaLabel="Add subcategory"
+              (onClick)="openCreate(type, node.category.id)"
+            />
+            <p-button
+              icon="pi pi-pencil"
+              [rounded]="true"
+              [text]="true"
+              severity="secondary"
+              ariaLabel="Edit category"
+              (onClick)="openEdit(node.category)"
+            />
+            <p-button
+              icon="pi pi-trash"
+              [rounded]="true"
+              [text]="true"
+              severity="danger"
+              ariaLabel="Delete category"
+              (onClick)="confirmDelete(node.category, $event)"
+            />
+          </div>
+        </div>
+        @if (node.children.length > 0) {
+          <ng-container
+            *ngTemplateOutlet="
+              categoryTree;
+              context: { $implicit: node.children, depth: depth + 1, type: type }
+            "
+          />
+        }
+      </li>
+    }
+  </ul>
+</ng-template>
 
 <p-dialog
   [header]="editingId() ? 'Edit category' : 'Create category'"

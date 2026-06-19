@@ -1,18 +1,13 @@
 import type { Category } from '../../core/models/category';
 
-import { orderedCategories } from './category-tree';
+import { categoryPath, orderedCategories } from './category-tree';
 
 export function categoryLabel(categories: Category[], categoryId: string): string {
-  const category = categories.find((c) => c.id === categoryId);
-  if (!category) {
+  if (!categories.some((category) => category.id === categoryId)) {
     return 'Unknown';
   }
 
-  const parent = category.parentId
-    ? categories.find((c) => c.id === category.parentId)
-    : undefined;
-
-  return parent ? `${parent.name} / ${category.name}` : category.name;
+  return categoryPath(categories, categoryId);
 }
 
 export interface CategoryFilterOption {
@@ -29,14 +24,10 @@ export function categorySelectOptions(categories: Category[]): { label: string; 
     return [];
   }
 
-  const byId = new Map(categories.map((c) => [c.id, c]));
   const type = categories[0].type;
 
-  return orderedCategories(categories, type).map((category) => {
-    const parent = category.parentId ? byId.get(category.parentId) : undefined;
-    return {
-      label: parent ? `${parent.name} / ${category.name}` : category.name,
-      value: category.id,
-    };
-  });
+  return orderedCategories(categories, type).map((category) => ({
+    label: categoryPath(categories, category.id),
+    value: category.id,
+  }));
 }

@@ -1,4 +1,5 @@
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ConfirmationService } from 'primeng/api';
@@ -12,7 +13,13 @@ import { CategoriesService } from '../../core/categories/categories.service';
 import type { Category, CategoryType } from '../../core/models/category';
 import { CATEGORY_ICONS } from '../../shared/constants/category-icons';
 import { CATEGORY_TYPES } from '../../shared/constants/category-types';
-import { buildCategoryTree, type CategoryNode } from '../../shared/utils/category-tree';
+import {
+  buildCategoryTree,
+  categoryDescendantIds,
+  categoryPath,
+  orderedCategories,
+  type CategoryNode,
+} from '../../shared/utils/category-tree';
 import { toErrorMessage } from '../../shared/utils/to-error-message';
 
 const NO_PARENT = '';
@@ -21,6 +28,7 @@ const NO_PARENT = '';
   selector: 'app-categories',
   imports: [
     DragDropModule,
+    NgTemplateOutlet,
     ReactiveFormsModule,
     Button,
     Dialog,
@@ -91,36 +99,37 @@ export class Categories implements OnInit {
   protected parentOptions(): { label: string; value: string }[] {
     const type = this.form.getRawValue().type;
     const editingId = this.editingId();
+    const ofType = this.categories().filter((category) => category.type === type);
+    const invalidParents = new Set<string>();
 
-    if (editingId && this.hasSubcategories(editingId)) {
-      return [{ label: 'None (top level)', value: NO_PARENT }];
+    if (editingId) {
+      invalidParents.add(editingId);
+      categoryDescendantIds(ofType, editingId).forEach((id) => invalidParents.add(id));
     }
 
-    const roots = buildCategoryTree(this.categories(), type)
-      .map((node) => node.category)
-      .filter((category) => category.id !== editingId);
+    const options = orderedCategories(ofType, type)
+      .filter((category) => !invalidParents.has(category.id))
+      .map((category) => ({
+        label: categoryPath(ofType, category.id),
+        value: category.id,
+      }));
 
-    return [
-      { label: 'None (top level)', value: NO_PARENT },
-      ...roots.map((category) => ({ label: category.name, value: category.id })),
-    ];
+    return [{ label: 'None (top level)', value: NO_PARENT }, ...options];
   }
 
   protected parentFieldHint(): string {
     if (this.presetParentId()) {
       return 'Parent is set for this subcategory.';
     }
-    if (this.editingId() && this.hasSubcategories(this.editingId()!)) {
-      return 'Top-level only while this category has subcategories.';
-    }
-    return 'Choose a top-level parent, or None to keep at top level.';
+    return 'Choose a parent category, or None to keep at top level.';
   }
 
   protected parentName(parentId: string | null): string | null {
     if (!parentId) {
       return null;
     }
-    return this.categories().find((c) => c.id === parentId)?.name ?? null;
+
+    return categoryPath(this.categories(), parentId) || null;
   }
 
   protected iconClass(icon: string): string {
@@ -206,48 +215,23 @@ export class Categories implements OnInit {
     }
   }
 
-  protected async dropRootCategory(
+  protected async dropCategoryNodes(
     event: CdkDragDrop<CategoryNode[]>,
-    type: CategoryType,
+    _type: CategoryType,
   ): Promise<void> {
     if (event.previousIndex === event.currentIndex || this.reordering()) {
       return;
     }
 
-    const tree = [...(type === 'income' ? this.incomeTree() : this.outcomeTree())];
-    moveItemInArray(tree, event.previousIndex, event.currentIndex);
-    this.applySiblingOrder(tree.map((node) => node.category));
+    const siblings = [...event.container.data];
+    moveItemInArray(siblings, event.previousIndex, event.currentIndex);
+    this.applySiblingOrder(siblings.map((node) => node.category));
 
     this.reordering.set(true);
     this.errorMessage.set(null);
 
     try {
-      await this.categoriesService.reorder(tree.map((node) => node.category.id));
-    } catch (error) {
-      this.errorMessage.set(toCategoryErrorMessage(error));
-      await this.reload();
-    } finally {
-      this.reordering.set(false);
-    }
-  }
-
-  protected async dropChildCategory(
-    event: CdkDragDrop<Category[]>,
-    parentId: string,
-  ): Promise<void> {
-    if (event.previousIndex === event.currentIndex || this.reordering()) {
-      return;
-    }
-
-    const children = [...event.container.data];
-    moveItemInArray(children, event.previousIndex, event.currentIndex);
-    this.applySiblingOrder(children);
-
-    this.reordering.set(true);
-    this.errorMessage.set(null);
-
-    try {
-      await this.categoriesService.reorder(children.map((child) => child.id));
+      await this.categoriesService.reorder(siblings.map((node) => node.category.id));
     } catch (error) {
       this.errorMessage.set(toCategoryErrorMessage(error));
       await this.reload();
@@ -291,10 +275,6 @@ export class Categories implements OnInit {
     } else {
       this.form.controls.parentId.enable({ emitEvent: false });
     }
-  }
-
-  private hasSubcategories(categoryId: string): boolean {
-    return this.categories().some((c) => c.parentId === categoryId);
   }
 
   private async deleteCategory(id: string): Promise<void> {

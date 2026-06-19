@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import type { Category, CategoryInput, CategoryRow, CategoryType } from '../models/category';
 import { mapCategory } from '../models/category';
+import { isCategoryUnder } from '../../shared/utils/category-tree';
 import { getSupabaseClient } from '../supabase/supabase';
 
 @Injectable({ providedIn: 'root' })
@@ -136,48 +137,19 @@ export class CategoriesService {
       throw new Error('A category cannot be its own parent.');
     }
 
-    const { data, error } = await this.supabase
-      .from('categories')
-      .select('id, type, parent_id')
-      .eq('id', parentId)
-      .maybeSingle();
+    const categories = await this.list(type);
+    const parent = categories.find((category) => category.id === parentId);
 
-    if (error) {
-      throw error;
-    }
-
-    if (!data) {
+    if (!parent) {
       throw new Error('Parent category not found.');
     }
 
-    const parent = data as Pick<CategoryRow, 'id' | 'type' | 'parent_id'>;
     if (parent.type !== type) {
       throw new Error('Parent must be the same type (income or outcome).');
     }
 
-    if (parent.parent_id) {
-      throw new Error('Parent must be a top-level category.');
-    }
-
-    if (editingId) {
-      const { data: children, error: childrenError } = await this.supabase
-        .from('categories')
-        .select('id')
-        .eq('parent_id', editingId);
-
-      if (childrenError) {
-        throw childrenError;
-      }
-
-      if (children && children.length > 0) {
-        throw new Error(
-          'Remove or reassign subcategories before assigning a parent to this category.',
-        );
-      }
-
-      if (children?.some((c) => c.id === parentId)) {
-        throw new Error('Cannot set parent to a subcategory of this category.');
-      }
+    if (editingId && isCategoryUnder(categories, parentId, editingId)) {
+      throw new Error('Cannot set parent to a subcategory of this category.');
     }
   }
 
