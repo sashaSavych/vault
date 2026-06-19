@@ -3,6 +3,7 @@ import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angu
 import { RouterLink } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
 import { Button } from 'primeng/button';
+import { Checkbox } from 'primeng/checkbox';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 import { DatePicker } from 'primeng/datepicker';
 import { Dialog } from 'primeng/dialog';
@@ -30,6 +31,7 @@ import {
   outcomeImportFingerprint,
   parseStatementGrid,
   toOutcomeInput,
+  type OutcomeImportItem,
 } from '../../shared/utils/parse-statement';
 import { AccountSelectLabel } from '../../shared/components/account-select-label/account-select-label';
 import {
@@ -48,6 +50,20 @@ import { formatBalance } from '../../shared/utils/format-balance';
 import { formatDate, parseIsoDate, toIsoDateString } from '../../shared/utils/format-date';
 import { toErrorMessage } from '../../shared/utils/to-error-message';
 
+interface OutcomeImportReviewRow {
+  key: string;
+  selected: boolean;
+  item: OutcomeImportItem;
+}
+
+interface OutcomeImportMeta {
+  fileName: string;
+  parsedRowCount: number;
+  skippedCount: number;
+  duplicateCount: number;
+  allItems: OutcomeImportItem[];
+}
+
 @Component({
   selector: 'app-outcomes',
   imports: [
@@ -55,6 +71,7 @@ import { toErrorMessage } from '../../shared/utils/to-error-message';
     FormsModule,
     ReactiveFormsModule,
     Button,
+    Checkbox,
     Dialog,
     InputText,
     InputNumber,
@@ -87,11 +104,16 @@ export class Outcomes implements OnInit {
   protected readonly outcomes = signal<OutcomeWithDetails[]>([]);
   protected readonly loading = signal(true);
   protected readonly importing = signal(false);
+  protected readonly importConfirming = signal(false);
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
   protected readonly dialogErrorMessage = signal<string | null>(null);
   protected readonly dialogVisible = signal(false);
+  protected readonly importDialogVisible = signal(false);
+  protected readonly importDialogError = signal<string | null>(null);
+  protected readonly importReviewRows = signal<OutcomeImportReviewRow[]>([]);
+  protected readonly importMeta = signal<OutcomeImportMeta | null>(null);
   protected readonly editingId = signal<string | null>(null);
   protected readonly editingOutcome = signal<OutcomeWithDetails | null>(null);
 
@@ -125,6 +147,15 @@ export class Outcomes implements OnInit {
 
   protected readonly formAccountOptions = computed(() => accountSelectOptions(this.accounts()));
 
+  protected readonly selectedImportCount = computed(
+    () => this.importReviewRows().filter((row) => row.selected).length,
+  );
+
+  protected readonly allImportSelected = computed(() => {
+    const rows = this.importReviewRows();
+    return rows.length > 0 && rows.every((row) => row.selected);
+  });
+
   ngOnInit(): void {
     void this.reload();
   }
@@ -135,6 +166,10 @@ export class Outcomes implements OnInit {
       return null;
     }
     return formatBalance(account.balance, account.currency);
+  }
+
+  protected importAccountCurrency(accountId: string): string {
+    return this.accounts().find((account) => account.id === accountId)?.currency ?? '';
   }
 
   protected openCreate(): void {
@@ -285,60 +320,122 @@ export class Outcomes implements OnInit {
         return;
       }
 
-      const saved = await this.outcomesService.createMany(toSave.map(toOutcomeInput));
-
-      const savedFingerprints = new Set(toSave.map(outcomeImportFingerprint));
-
-      console.group('Outcome import');
-      console.log('Source:', file.name);
-      console.log('Category mapping source:', 'edge-function');
-      console.log('Debit rows parsed:', rows.length);
-      console.log('Saved to DB:', saved);
-      console.log('Duplicates skipped:', duplicateCount);
-      console.log('Validation skipped:', skipped);
-      console.table(
-        items.map((item) => ({
-          name: item.name,
-          date: item.date,
-          amount: item.amount,
-          card: item.cardLast4 ?? '',
-          accountId: item.accountCardId ?? '',
-          account: item.accountFallback
-            ? `${item.accountName} (fallback)`
-            : (item.accountName ?? ''),
-          bankCategory: item.bankCategory,
-          category: item.categoryName ?? item.categoryId,
-          categoryBy: item.categoryMatchedBy ?? '',
-          saved: !isImportSavable(item)
-            ? 'no'
-            : savedFingerprints.has(outcomeImportFingerprint(item))
-              ? 'yes'
-              : 'duplicate',
-          error: item.error ?? '',
+      this.importMeta.set({
+        fileName: file.name,
+        parsedRowCount: rows.length,
+        skippedCount: skipped,
+        duplicateCount,
+        allItems: items,
+      });
+      this.importReviewRows.set(
+        toSave.map((item) => ({
+          key: outcomeImportFingerprint(item),
+          selected: true,
+          item,
         })),
       );
-      console.groupEnd();
+      this.importDialogError.set(null);
+      this.importDialogVisible.set(true);
+    } catch (error) {
+      console.error('Import failed:', error);
+      this.errorMessage.set(toErrorMessage(error));
+    } finally {
+      this.importing.set(false);
+    }
+  }
 
+  protected closeImportDialog(): void {
+    this.importDialogVisible.set(false);
+    this.importReviewRows.set([]);
+    this.importMeta.set(null);
+    this.importDialogError.set(null);
+  }
+
+  protected setImportRowSelected(key: string, selected: boolean): void {
+    this.importReviewRows.update((rows) =>
+      rows.map((row) => (row.key === key ? { ...row, selected } : row)),
+    );
+  }
+
+  protected setAllImportSelected(selected: boolean): void {
+    this.importReviewRows.update((rows) => rows.map((row) => ({ ...row, selected })));
+  }
+
+  protected async confirmImport(): Promise<void> {
+    const selected = this.importReviewRows()
+      .filter((row) => row.selected)
+      .map((row) => row.item);
+
+    if (selected.length === 0) {
+      this.importDialogError.set('Select at least one outcome to import.');
+      return;
+    }
+
+    this.importConfirming.set(true);
+    this.importDialogError.set(null);
+
+    try {
+      const saved = await this.outcomesService.createMany(selected.map(toOutcomeInput));
+      const meta = this.importMeta();
+      const savedFingerprints = new Set(selected.map(outcomeImportFingerprint));
+      const unchecked = this.importReviewRows().length - selected.length;
+
+      if (meta) {
+        console.group('Outcome import');
+        console.log('Source:', meta.fileName);
+        console.log('Category mapping source:', 'edge-function');
+        console.log('Debit rows parsed:', meta.parsedRowCount);
+        console.log('Saved to DB:', saved);
+        console.log('Duplicates skipped:', meta.duplicateCount);
+        console.log('Validation skipped:', meta.skippedCount);
+        console.log('Not imported (unchecked):', this.importReviewRows().length - selected.length);
+        console.table(
+          meta.allItems.map((item) => ({
+            name: item.name,
+            date: item.date,
+            amount: item.amount,
+            card: item.cardLast4 ?? '',
+            accountId: item.accountCardId ?? '',
+            account: item.accountFallback
+              ? `${item.accountName} (fallback)`
+              : (item.accountName ?? ''),
+            bankCategory: item.bankCategory,
+            category: item.categoryName ?? item.categoryId,
+            categoryBy: item.categoryMatchedBy ?? '',
+            saved: !isImportSavable(item)
+              ? 'no'
+              : savedFingerprints.has(outcomeImportFingerprint(item))
+                ? 'yes'
+                : 'unchecked',
+            error: item.error ?? '',
+          })),
+        );
+        console.groupEnd();
+      }
+
+      this.closeImportDialog();
       await this.reload();
 
       const summaryParts: string[] = [];
       if (saved > 0) {
         summaryParts.push(`Imported ${saved} outcome${saved === 1 ? '' : 's'}.`);
       }
-      if (duplicateCount > 0) {
+      if (meta && meta.duplicateCount > 0) {
         summaryParts.push(
-          `${duplicateCount} duplicate${duplicateCount === 1 ? '' : 's'} skipped.`,
+          `${meta.duplicateCount} duplicate${meta.duplicateCount === 1 ? '' : 's'} skipped.`,
         );
       }
-      if (skipped > 0) {
-        summaryParts.push(`${skipped} row${skipped === 1 ? '' : 's'} skipped.`);
+      if (meta && meta.skippedCount > 0) {
+        summaryParts.push(`${meta.skippedCount} row${meta.skippedCount === 1 ? '' : 's'} skipped.`);
+      }
+      if (unchecked > 0) {
+        summaryParts.push(`${unchecked} not imported (unchecked).`);
       }
       this.successMessage.set(summaryParts.join(' '));
     } catch (error) {
-      console.error('Import failed:', error);
-      this.errorMessage.set(toErrorMessage(error));
+      this.importDialogError.set(toErrorMessage(error));
     } finally {
-      this.importing.set(false);
+      this.importConfirming.set(false);
     }
   }
 
