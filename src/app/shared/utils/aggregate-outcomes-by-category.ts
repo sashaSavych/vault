@@ -1,7 +1,7 @@
 import type { Category } from '../../core/models/category';
 import type { OutcomeWithDetails } from '../../core/models/outcome';
 
-import { categorySortIndex } from './category-tree';
+import { categoryRoot, categorySortIndex } from './category-tree';
 
 export interface OutcomeCategoryCurrencyTotal {
   currency: string;
@@ -29,15 +29,19 @@ export function aggregateOutcomesByCategory(
   const byCategory = new Map<string, OutcomeCategoryReportRow>();
 
   for (const outcome of outcomes) {
-    let row = byCategory.get(outcome.categoryId);
+    const rootCategory = categories.length > 0 ? categoryRoot(categories, outcome.categoryId) : undefined;
+    const groupCategoryId = rootCategory?.id ?? outcome.categoryId;
+    const groupCategoryName = rootCategory?.name ?? outcome.categoryName;
+
+    let row = byCategory.get(groupCategoryId);
     if (!row) {
       row = {
-        categoryId: outcome.categoryId,
-        categoryName: outcome.categoryName,
+        categoryId: groupCategoryId,
+        categoryName: groupCategoryName,
         currencies: [],
         totalCount: 0,
       };
-      byCategory.set(outcome.categoryId, row);
+      byCategory.set(groupCategoryId, row);
     }
 
     row.totalCount += 1;

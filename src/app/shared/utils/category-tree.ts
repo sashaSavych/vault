@@ -48,6 +48,26 @@ export function categoryPath(categories: Category[], categoryId: string): string
   return parts.join(' / ');
 }
 
+/** Top-level (root) category for the given id. */
+export function categoryRoot(categories: Category[], categoryId: string): Category | undefined {
+  const byId = new Map(categories.map((category) => [category.id, category]));
+  let current = byId.get(categoryId);
+
+  if (!current) {
+    return undefined;
+  }
+
+  while (current.parentId) {
+    const parent = byId.get(current.parentId);
+    if (!parent) {
+      break;
+    }
+    current = parent;
+  }
+
+  return current;
+}
+
 export function categoryDescendantIds(categories: Category[], categoryId: string): Set<string> {
   const descendants = new Set<string>();
   const queue = [categoryId];

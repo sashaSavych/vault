@@ -1,7 +1,7 @@
 import type { Category } from '../../core/models/category';
 import type { IncomeWithDetails } from '../../core/models/income';
 
-import { categorySortIndex } from './category-tree';
+import { categoryRoot, categorySortIndex } from './category-tree';
 
 export interface IncomeCategoryCurrencyTotal {
   currency: string;
@@ -29,15 +29,19 @@ export function aggregateIncomesByCategory(
   const byCategory = new Map<string, IncomeCategoryReportRow>();
 
   for (const income of incomes) {
-    let row = byCategory.get(income.categoryId);
+    const rootCategory = categories.length > 0 ? categoryRoot(categories, income.categoryId) : undefined;
+    const groupCategoryId = rootCategory?.id ?? income.categoryId;
+    const groupCategoryName = rootCategory?.name ?? income.categoryName;
+
+    let row = byCategory.get(groupCategoryId);
     if (!row) {
       row = {
-        categoryId: income.categoryId,
-        categoryName: income.categoryName,
+        categoryId: groupCategoryId,
+        categoryName: groupCategoryName,
         currencies: [],
         totalCount: 0,
       };
-      byCategory.set(income.categoryId, row);
+      byCategory.set(groupCategoryId, row);
     }
 
     row.totalCount += 1;
