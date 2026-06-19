@@ -54,6 +54,35 @@
   text-align: right;
 }
 
+.outcome-card-actions {
+  flex-direction: column;
+  align-items: center;
+}
+
+@media (min-width: 640px) {
+  .outcome-card-actions {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .outcome-card-meta {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr) auto;
+  }
+}
+
+@media (max-width: 639px) {
+  .outcome-card-meta {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    row-gap: 0.25rem;
+  }
+
+  .outcome-card-meta > :last-child {
+    grid-column: 1 / -1;
+    justify-self: start;
+    text-align: left;
+  }
+}
+
 .import-review-list {
   max-height: min(24rem, 60vh);
   overflow-y: auto;

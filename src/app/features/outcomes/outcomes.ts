@@ -24,6 +24,7 @@ import {
   type OutcomeWithDetails,
 } from '../../core/models/outcome';
 import { OutcomesService } from '../../core/outcomes/outcomes.service';
+import { TransfersService } from '../../core/transfers/transfers.service';
 import {
   buildOutcomeImports,
   dedupeOutcomeImports,
@@ -98,6 +99,7 @@ interface OutcomeImportMeta {
 })
 export class Outcomes implements OnInit {
   private readonly outcomesService = inject(OutcomesService);
+  private readonly transfersService = inject(TransfersService);
   private readonly accountsService = inject(AccountsService);
   private readonly categoriesService = inject(CategoriesService);
   private readonly categoryMappingsService = inject(CategoryMappingsService);
@@ -107,6 +109,7 @@ export class Outcomes implements OnInit {
 
   private readonly importInput = viewChild<ElementRef<HTMLInputElement>>('importInput');
   private leaveResolver: ((allowed: boolean) => void) | null = null;
+  private transferFormSyncing = false;
 
   protected readonly formatBalance = formatBalance;
   protected readonly formatDate = formatDate;
@@ -124,6 +127,10 @@ export class Outcomes implements OnInit {
   protected readonly importConfirming = signal(false);
   protected readonly saving = signal(false);
   protected readonly syncing = signal(false);
+  protected readonly convertDialogVisible = signal(false);
+  protected readonly convertDialogError = signal<string | null>(null);
+  protected readonly convertSaving = signal(false);
+  protected readonly convertingOutcome = signal<OutcomeWithDetails | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
   protected readonly dialogErrorMessage = signal<string | null>(null);
@@ -154,6 +161,16 @@ export class Outcomes implements OnInit {
     accountId: ['', Validators.required],
   });
 
+  protected readonly transferForm = this.fb.nonNullable.group({
+    name: ['Transfer', [Validators.required, Validators.maxLength(80)]],
+    fromAccountId: ['', Validators.required],
+    toAccountId: ['', Validators.required],
+    amountFrom: [0, [Validators.required, Validators.min(1)]],
+    amountTo: [0, [Validators.required, Validators.min(1)]],
+    exchangeRate: [1, [Validators.required, Validators.min(0.00000001)]],
+    date: [new Date(), Validators.required],
+  });
+
   protected readonly accountOptions = computed(() => accountFilterOptions(this.accounts()));
 
   protected readonly categoryFilterSelectOptions = computed(() =>
@@ -165,6 +182,8 @@ export class Outcomes implements OnInit {
   );
 
   protected readonly formAccountOptions = computed(() => accountSelectOptions(this.accounts()));
+
+  protected readonly transferAccountOptions = computed(() => accountSelectOptions(this.accounts()));
 
   protected readonly selectedImportCount = computed(
     () => this.importReviewRows().filter((row) => row.selected).length,
@@ -271,6 +290,112 @@ export class Outcomes implements OnInit {
       accountId: outcome.accountId,
     });
     this.dialogVisible.set(true);
+  }
+
+  protected openConvertToTransfer(outcome: OutcomeWithDetails): void {
+    const accs = this.accounts();
+    if (accs.length < 2) {
+      this.errorMessage.set('Create at least two accounts before converting to a transfer.');
+      return;
+    }
+
+    const toAccount = accs.find((account) => account.id !== outcome.accountId);
+    if (!toAccount) {
+      this.errorMessage.set('Choose a different destination account for the transfer.');
+      return;
+    }
+
+    this.convertingOutcome.set(outcome);
+    this.convertDialogError.set(null);
+    this.transferForm.reset({
+      name: outcome.name,
+      fromAccountId: outcome.accountId,
+      toAccountId: toAccount.id,
+      amountFrom: outcome.amount,
+      amountTo: outcome.amount,
+      exchangeRate: 1,
+      date: parseIsoDate(outcome.date),
+    });
+    this.onTransferAccountsChange();
+    this.convertDialogVisible.set(true);
+  }
+
+  protected closeConvertDialog(): void {
+    this.convertDialogVisible.set(false);
+    this.convertingOutcome.set(null);
+    this.convertDialogError.set(null);
+  }
+
+  protected isTransferCrossCurrency(): boolean {
+    const raw = this.transferForm.getRawValue();
+    const from = this.accounts().find((account) => account.id === raw.fromAccountId);
+    const to = this.accounts().find((account) => account.id === raw.toAccountId);
+    return !!from && !!to && from.currency !== to.currency;
+  }
+
+  protected transferAccountBalance(accountId: string): string | null {
+    const account = this.accounts().find((item) => item.id === accountId);
+    if (!account) {
+      return null;
+    }
+    return formatBalance(account.balance, account.currency);
+  }
+
+  protected onTransferAccountsChange(): void {
+    if (this.isTransferCrossCurrency()) {
+      this.syncTransferFromAmount();
+    } else {
+      this.syncTransferSameCurrency();
+    }
+  }
+
+  protected onTransferAmountFromChange(): void {
+    if (this.isTransferCrossCurrency()) {
+      this.syncTransferFromAmount();
+    } else {
+      this.syncTransferSameCurrency();
+    }
+  }
+
+  protected onTransferExchangeRateChange(): void {
+    this.syncTransferFromAmount();
+  }
+
+  protected onTransferAmountToChange(): void {
+    if (!this.isTransferCrossCurrency()) {
+      return;
+    }
+
+    const { amountFrom, amountTo } = this.transferForm.getRawValue();
+    if (amountFrom <= 0) {
+      return;
+    }
+
+    this.patchTransferForm({ exchangeRate: roundTransferRate(amountTo / amountFrom) });
+  }
+
+  protected async confirmConvertToTransfer(): Promise<void> {
+    if (this.transferForm.invalid) {
+      this.transferForm.markAllAsTouched();
+      return;
+    }
+
+    const raw = this.transferForm.getRawValue();
+    if (raw.fromAccountId === raw.toAccountId) {
+      this.convertDialogError.set('Choose different source and destination accounts.');
+      return;
+    }
+
+    await proceedOrConfirmInsufficientBalance(
+      this.confirmation,
+      this.convertInsufficientBalanceWarning(),
+      () => this.performConvertToTransfer(),
+    );
+  }
+
+  protected showTransferError(controlName: 'name'): boolean {
+    const control = this.transferForm.controls[controlName];
+    return control.invalid && control.touched;
   }
 
   protected closeDialog(): void {
@@ -629,6 +754,103 @@ export class Outcomes implements OnInit {
     this.successMessage.set(null);
   }
 
+  private async performConvertToTransfer(): Promise<void> {
+    const outcome = this.convertingOutcome();
+    if (!outcome) {
+      return;
+    }
+
+    const raw = this.transferForm.getRawValue();
+
+    this.convertSaving.set(true);
+    this.convertDialogError.set(null);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    try {
+      await this.transfersService.create({
+        name: raw.name,
+        fromAccountId: raw.fromAccountId,
+        toAccountId: raw.toAccountId,
+        amountFrom: raw.amountFrom,
+        amountTo: raw.amountTo,
+        exchangeRate: this.isTransferCrossCurrency() ? raw.exchangeRate : 1,
+        date: toIsoDateString(raw.date),
+      });
+
+      await this.removeOutcomeAfterConvert(outcome.id);
+
+      this.accounts.set(await this.accountsService.list());
+      this.closeConvertDialog();
+      this.successMessage.set('Converted to transfer.');
+    } catch (error) {
+      this.convertDialogError.set(toErrorMessage(error));
+    } finally {
+      this.convertSaving.set(false);
+    }
+  }
+
+  private convertInsufficientBalanceWarning(): string | null {
+    const raw = this.transferForm.getRawValue();
+    const outcome = this.convertingOutcome();
+    const from = this.accounts().find((account) => account.id === raw.fromAccountId);
+
+    if (!from || !outcome) {
+      return null;
+    }
+
+    let available = this.projectedAccountBalance(raw.fromAccountId);
+    if (outcome.accountId === raw.fromAccountId) {
+      available += outcome.amount;
+    }
+
+    return insufficientBalanceWarning(available, raw.amountFrom, from.currency);
+  }
+
+  private async removeOutcomeAfterConvert(outcomeId: string): Promise<void> {
+    if (isPendingOutcomeId(outcomeId)) {
+      this.pendingCreates.update((pending) => pending.filter((item) => item.tempId !== outcomeId));
+      return;
+    }
+
+    this.pendingDeletes.update((deleted) => {
+      const next = new Set(deleted);
+      next.delete(outcomeId);
+      return next;
+    });
+    this.pendingUpdates.update((updates) => {
+      if (!updates.has(outcomeId)) {
+        return updates;
+      }
+      const next = new Map(updates);
+      next.delete(outcomeId);
+      return next;
+    });
+
+    await this.outcomesService.remove(outcomeId);
+    await this.reloadOutcomes();
+  }
+
+  private syncTransferSameCurrency(): void {
+    const amount = this.transferForm.getRawValue().amountFrom;
+    this.patchTransferForm({ amountTo: amount, exchangeRate: 1 });
+  }
+
+  private syncTransferFromAmount(): void {
+    const { amountFrom, exchangeRate } = this.transferForm.getRawValue();
+    this.patchTransferForm({ amountTo: roundTransferMoney(amountFrom * exchangeRate) });
+  }
+
+  private patchTransferForm(value: Partial<typeof this.transferForm.value>): void {
+    if (this.transferFormSyncing) {
+      return;
+    }
+
+    this.transferFormSyncing = true;
+    this.transferForm.patchValue(value, { emitEvent: false });
+    this.transferFormSyncing = false;
+  }
+
   private async performSync(): Promise<void> {
     this.syncing.set(true);
     this.errorMessage.set(null);
@@ -862,4 +1084,12 @@ export class Outcomes implements OnInit {
       }),
     );
   }
+}
+
+function roundTransferMoney(value: number): number {
+  return Math.round(value);
+}
+
+function roundTransferRate(value: number): number {
+  return Math.round(value * 100000000) / 100000000;
 }

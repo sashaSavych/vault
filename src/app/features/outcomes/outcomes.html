@@ -233,7 +233,17 @@
                   </span>
                 </div>
               </div>
-              <div class="flex shrink-0 gap-1">
+              <div class="outcome-card-actions flex shrink-0 gap-1">
+                @if (accounts().length >= 2) {
+                  <p-button
+                    icon="pi pi-arrow-right-arrow-left"
+                    [rounded]="true"
+                    [text]="true"
+                    severity="secondary"
+                    ariaLabel="Convert to transfer"
+                    (onClick)="openConvertToTransfer(outcome)"
+                  />
+                }
                 <p-button
                   icon="pi pi-pencil"
                   [rounded]="true"
@@ -461,6 +471,162 @@
       />
     </div>
   </div>
+</p-dialog>
+
+<p-dialog
+  header="Convert to transfer"
+  [modal]="true"
+  [dismissableMask]="true"
+  [visible]="convertDialogVisible()"
+  (visibleChange)="convertDialogVisible.set($event)"
+  [style]="{ width: '100%', maxWidth: '28rem' }"
+  [draggable]="false"
+  (onHide)="closeConvertDialog()"
+>
+  <form class="flex flex-col gap-4" [formGroup]="transferForm" (ngSubmit)="confirmConvertToTransfer()">
+    @if (convertDialogError(); as message) {
+      <p-message severity="error" [text]="message" styleClass="w-full" />
+    }
+
+    <div class="flex flex-col gap-1">
+      <label for="convert-transfer-name" class="text-sm font-medium">Name</label>
+      <input
+        pInputText
+        id="convert-transfer-name"
+        formControlName="name"
+        class="w-full"
+        autocomplete="off"
+        [invalid]="showTransferError('name')"
+      />
+      @if (showTransferError('name')) {
+        <small class="text-red-500">Name is required.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="convert-transfer-date" class="text-sm font-medium">Date</label>
+      <p-datepicker
+        inputId="convert-transfer-date"
+        formControlName="date"
+        [showIcon]="true"
+        dateFormat="dd M yy"
+        appendTo="body"
+        styleClass="w-full"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="convert-from-account" class="text-sm font-medium">From account</label>
+      <p-select
+        inputId="convert-from-account"
+        formControlName="fromAccountId"
+        [options]="transferAccountOptions()"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="w-full"
+        (onChange)="onTransferAccountsChange()"
+      >
+        <ng-template #selectedItem let-selected>
+          @if (selected) {
+            <app-account-select-label [icon]="selected.icon" [label]="selected.label" />
+          }
+        </ng-template>
+        <ng-template #item let-option>
+          <app-account-select-label [icon]="option.icon" [label]="option.label" />
+        </ng-template>
+      </p-select>
+      @if (transferAccountBalance(transferForm.controls.fromAccountId.value); as balance) {
+        <small class="text-muted-color"
+          >Balance: <span class="font-medium tabular-nums">{{ balance }}</span></small
+        >
+      }
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="convert-to-account" class="text-sm font-medium">To account</label>
+      <p-select
+        inputId="convert-to-account"
+        formControlName="toAccountId"
+        [options]="transferAccountOptions()"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="w-full"
+        (onChange)="onTransferAccountsChange()"
+      >
+        <ng-template #selectedItem let-selected>
+          @if (selected) {
+            <app-account-select-label [icon]="selected.icon" [label]="selected.label" />
+          }
+        </ng-template>
+        <ng-template #item let-option>
+          <app-account-select-label [icon]="option.icon" [label]="option.label" />
+        </ng-template>
+      </p-select>
+      @if (transferAccountBalance(transferForm.controls.toAccountId.value); as balance) {
+        <small class="text-muted-color"
+          >Balance: <span class="font-medium tabular-nums">{{ balance }}</span></small
+        >
+      }
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="convert-amount-from" class="text-sm font-medium">Amount (from)</label>
+      <p-inputnumber
+        inputId="convert-amount-from"
+        formControlName="amountFrom"
+        [minFractionDigits]="0"
+        [maxFractionDigits]="0"
+        styleClass="w-full"
+        inputStyleClass="w-full"
+        (onInput)="onTransferAmountFromChange()"
+      />
+    </div>
+
+    @if (isTransferCrossCurrency()) {
+      <div class="flex flex-col gap-1">
+        <label for="convert-exchange-rate" class="text-sm font-medium">Exchange rate</label>
+        <p-inputnumber
+          inputId="convert-exchange-rate"
+          formControlName="exchangeRate"
+          mode="decimal"
+          [minFractionDigits]="2"
+          [maxFractionDigits]="8"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+          (onInput)="onTransferExchangeRateChange()"
+        />
+        <small class="text-muted-color">Amount to = amount from × rate</small>
+      </div>
+    }
+
+    <div class="flex flex-col gap-1">
+      <label for="convert-amount-to" class="text-sm font-medium">Amount (to)</label>
+      <p-inputnumber
+        inputId="convert-amount-to"
+        formControlName="amountTo"
+        [minFractionDigits]="0"
+        [maxFractionDigits]="0"
+        styleClass="w-full"
+        inputStyleClass="w-full"
+        [readonly]="!isTransferCrossCurrency()"
+        (onInput)="onTransferAmountToChange()"
+      />
+    </div>
+
+    <div class="flex justify-end gap-2 pt-2">
+      <p-button
+        type="button"
+        label="Cancel"
+        severity="secondary"
+        [text]="true"
+        [disabled]="convertSaving()"
+        (onClick)="closeConvertDialog()"
+      />
+      <p-button type="submit" label="Convert" [loading]="convertSaving()" />
+    </div>
+  </form>
 </p-dialog>
 
 <p-dialog
