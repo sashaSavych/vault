@@ -32,26 +32,6 @@
         <div
           class="account-summary mb-4 rounded-2xl border border-surface-200 bg-surface-50 p-4 dark:border-surface-800 dark:bg-surface-950"
         >
-          <div class="account-summary-toggle" role="group" aria-label="Summary mode">
-            <button
-              type="button"
-              class="account-summary-toggle-btn"
-              [class.is-active]="!includeDebtsInSummary()"
-              [attr.aria-pressed]="!includeDebtsInSummary()"
-              (click)="includeDebtsInSummary.set(false)"
-            >
-              Cash
-            </button>
-            <button
-              type="button"
-              class="account-summary-toggle-btn"
-              [class.is-active]="includeDebtsInSummary()"
-              [attr.aria-pressed]="includeDebtsInSummary()"
-              (click)="includeDebtsInSummary.set(true)"
-            >
-              Net
-            </button>
-          </div>
           <div class="account-summary-totals grid grid-cols-3 gap-2">
             @for (row of balanceByCurrency(); track row.currency) {
               <p class="account-summary-total min-w-0 text-center font-semibold tabular-nums">
@@ -61,13 +41,63 @@
           </div>
         </div>
 
+        <div class="account-toolbar mb-4 flex flex-wrap items-center justify-center gap-3">
+          <div class="account-segmented-toggle" role="group" aria-label="Summary mode">
+            <button
+              type="button"
+              class="account-segmented-toggle-btn"
+              [class.is-active]="!includeDebtsInSummary()"
+              [attr.aria-pressed]="!includeDebtsInSummary()"
+              (click)="includeDebtsInSummary.set(false)"
+            >
+              Cash
+            </button>
+            <button
+              type="button"
+              class="account-segmented-toggle-btn"
+              [class.is-active]="includeDebtsInSummary()"
+              [attr.aria-pressed]="includeDebtsInSummary()"
+              (click)="includeDebtsInSummary.set(true)"
+            >
+              Net
+            </button>
+          </div>
+          <div class="account-segmented-toggle" role="group" aria-label="Account balance filter">
+            <button
+              type="button"
+              class="account-segmented-toggle-btn"
+              [class.is-active]="!showZeroBalanceAccounts()"
+              [attr.aria-pressed]="!showZeroBalanceAccounts()"
+              (click)="showZeroBalanceAccounts.set(false)"
+            >
+              Non-zero
+            </button>
+            <button
+              type="button"
+              class="account-segmented-toggle-btn"
+              [class.is-active]="showZeroBalanceAccounts()"
+              [attr.aria-pressed]="showZeroBalanceAccounts()"
+              (click)="showZeroBalanceAccounts.set(true)"
+            >
+              All
+            </button>
+          </div>
+        </div>
+
+        @if (visibleActiveAccounts().length === 0) {
+          <div
+            class="rounded-2xl border border-dashed border-surface-300 bg-surface-0 p-8 text-center dark:border-surface-700 dark:bg-surface-900"
+          >
+            <p class="text-muted-color">No accounts with a non-zero balance.</p>
+          </div>
+        } @else {
         <ul
           class="account-list grid gap-3 sm:grid-cols-2"
           cdkDropList
-          [cdkDropListDisabled]="reordering()"
+          [cdkDropListDisabled]="reordering() || !showZeroBalanceAccounts()"
           (cdkDropListDropped)="dropAccount($event)"
         >
-          @for (account of activeAccounts(); track account.id) {
+          @for (account of visibleActiveAccounts(); track account.id) {
             <li
               cdkDrag
               [cdkDragStartDelay]="dragStartDelayMs()"
@@ -106,6 +136,7 @@
             </li>
           }
         </ul>
+        }
       } @else {
         <div
           class="rounded-2xl border border-dashed border-surface-300 bg-surface-0 p-8 text-center dark:border-surface-700 dark:bg-surface-900"

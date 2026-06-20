@@ -123,6 +123,7 @@ export class Accounts implements OnInit {
   protected readonly archivedAccounts = signal<Account[]>([]);
   protected readonly debts = signal<Debt[]>([]);
   protected readonly includeDebtsInSummary = signal(false);
+  protected readonly showZeroBalanceAccounts = signal(false);
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly reordering = signal(false);
@@ -169,6 +170,14 @@ export class Accounts implements OnInit {
       this.includeDebtsInSummary(),
     ),
   );
+
+  protected readonly visibleActiveAccounts = computed(() => {
+    const accounts = this.activeAccounts();
+    if (this.showZeroBalanceAccounts()) {
+      return accounts;
+    }
+    return accounts.filter((account) => account.balance !== 0);
+  });
 
   ngOnInit(): void {
     void this.reload();
